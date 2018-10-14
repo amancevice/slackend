@@ -12,7 +12,7 @@
   "name": "slackbot",
   "description": "Simple Slackbot for deployment on AWS",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "index.js",
   "devDependencies": {
     "aws-sdk": "^2.330.0"
   },
