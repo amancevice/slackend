@@ -1,10 +1,31 @@
-# Serverless Slackbot
+# Asynchronous Slackbot
 
-Simple Slack app backend.
+Deploy a simple, asynchronous back end for your Slack app.
 
-By default this app does nothing but (optionally) verify requests and log them to the console. In production this app is intended to publish messages from Slack to a messaging service like Amazon SNS, or Google Pub/Sub.
+The service intentionally does very little: it accepts an incoming request, verifies the origin of request, and publishes the body of the request to a trigger or queue for asynchronous processing.
 
-The fetching of additional/secret environmental values and the method of publication is configurable.
+Endpoints are provided for:
+
+- `/callbacks` to handle [interactive messages](https://api.slack.com/interactive-messages)
+- `/events` to handle events from the [Events API](https://api.slack.com/events-api)
+- `/slash/:cmd` to handle [slash commands](https://api.slack.com/slash-commands)
+- `/oauth` to complete steps 2-3 of the [OAuth2](https://api.slack.com/docs/oauth) workflow
+
+Without any additional configuration, publishing requests consists of simply logging them to the console.
+
+In production it is expected that users will attach their own publishing functions to connect to a messaging service like [Amazon SNS](https://aws.amazon.com/sns/), or [Google Pub/Sub](https://cloud.google.com/pubsub/docs/).
+
+The fetching of additional/secret environmental values necessary for connecting to external services is also configurable.
+
+**Advantages**
+
+- Separates the concerns of handling & responding to incoming requests and the logic to act on them. Expanding the functionality of your Slack app can be accomplished independently of this service.
+- Designed to work within serverless frameworks, such as [AWS Lambda](https://aws.amazon.com/lambda/).
+- Authenticates requests using Slack's [signing secrets](https://api.slack.com/docs/verifying-requests-from-slack) so you'll know that events published to internal triggers/queues are verified.
+
+**Drawbacks**
+
+- Slack has a strict 3-second lifetime for many API operations, so it is critical that your asynchronous tasks complete quickly. Cold start times of some serverless computing platforms may be prohibitively slow.
 
 ## Usage
 
@@ -55,6 +76,23 @@ curl -X POST -d 'fizz=buzz' 'http://localhost:3000/slash/fizz'
 The [`lambda.js`](./lambda.js) script shows how to deploy the app to Lambda.
 
 The script shows how to fetch additional environment variables using SecretsManager and publishing to SNS.
+
+```javascript
+'use strict';
+const awsServerlessExpress = require('aws-serverless-express');
+const app = require('./index');
+
+app.set('fetchEnv', () => {
+  // Get ENV values
+});
+
+app.set('publish', (payload, topic) => {
+  // Publish `payload` to `topic`
+});
+
+const server = awsServerlessExpress.createServer(app);
+exports.handler = (event, context) => awsServerlessExpress.proxy(server, event, context);
+```
 
 ## Customization
 
