@@ -52,7 +52,10 @@ function getEnv(req, res, next) {
  */
 function verifyRequest (req, res, next) {
   console.log(`REQUEST ${JSON.stringify(req.body)}`);
-  if (env.VERIFY_REQUESTS) {
+  if (env.DISABLE_VERIFICATION) {
+    console.warn('VERIFICATION DISABLED');
+    next();
+  } else {
     const signing_secret = env.SIGNING_SECRET;
     const signing_version = env.SIGNING_VERSION;
     const ts = req.headers['x-slack-request-timestamp'];
@@ -69,10 +72,6 @@ function verifyRequest (req, res, next) {
     } else {
       next();
     }
-  }
-  else {
-    console.warn('SKIP VERIFY');
-    next();
   }
 }
 
