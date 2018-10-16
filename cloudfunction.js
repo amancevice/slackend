@@ -12,5 +12,5 @@ app.set('publish', (payload, topic) => {
 
 exports.handler = (req, res, next) => {
   req.url = process.env.ROUTE;
-  app._router.handle(req, res, next)
+  return app._router.handle(req, res, next);
 };

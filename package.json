@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node server.js"
   },
-  "name": "slackbot-express-async",
+  "name": "slackend",
   "description": "Simple asynchronous back end for Slack apps",
   "version": "0.0.1",
   "main": "index.js",
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/amancevice/slackbot-express-async.git"
+    "url": "git+https://github.com/amancevice/slackend.git"
   },
   "keywords": [
     "slack",
@@ -30,7 +30,7 @@
   "author": "smallweirdnumber",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/amancevice/slackbot-express-async/issues"
+    "url": "https://github.com/amancevice/slackend/issues"
   },
-  "homepage": "https://github.com/amancevice/slackbot-express-async#readme"
+  "homepage": "https://github.com/amancevice/slackend#readme"
 }
