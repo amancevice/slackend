@@ -6,7 +6,8 @@
     "express": "^4.16.3"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "mocha"
   },
   "name": "slackend",
   "description": "Simple asynchronous back end for Slack apps",
@@ -15,7 +16,9 @@
   "devDependencies": {
     "@google-cloud/pubsub": "^0.20.1",
     "aws-sdk": "^2.330.0",
-    "aws-serverless-express": "^3.3.5"
+    "aws-serverless-express": "^3.3.5",
+    "mocha": "^5.2.0",
+    "supertest": "^3.3.0"
   },
   "repository": {
     "type": "git",
