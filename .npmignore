@@ -1,2 +1,4 @@
 docs/
+test/
+.env.example
 docker-compose.yml
