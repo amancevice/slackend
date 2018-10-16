@@ -20,7 +20,7 @@ The fetching of additional/secret environmental values necessary for connecting 
 **Advantages**
 
 - Separates the concerns of handling & responding to incoming requests and the logic to act on them. Expanding the functionality of your Slack app can be accomplished independently of this service.
-- Designed to work within serverless frameworks, such as [AWS Lambda](https://aws.amazon.com/lambda/).
+- Designed to work within serverless frameworks, such as [AWS Lambda](https://aws.amazon.com/lambda/), but is agnostic to both the deployment and publishing platforms. The service could be deployed on AWS, for example, but publish messages on Google Pub/Sub.
 - Authenticates requests using Slack's [signing secrets](https://api.slack.com/docs/verifying-requests-from-slack) so you'll know that events published to internal triggers/queues are verified.
 
 **Drawbacks**
