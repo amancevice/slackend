@@ -10,8 +10,7 @@ let env;
  * Deafult ENV
  */
 function defaultFetchEnv () {
-  env = process.env;
-  return Promise.resolve(env);
+  return Promise.resolve(process.env);
 }
 
 /**
@@ -170,7 +169,7 @@ function publishBody (req, res) {
     console.log(`PUBLISHED ${JSON.stringify(ret)}`);
     res.status(204).send();
   }).catch((err) => {
-    res.status(500).send(err);
+    res.status(400).send(err);
   });
 }
 
