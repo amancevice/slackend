@@ -13,6 +13,7 @@
   "version": "0.0.1",
   "main": "index.js",
   "devDependencies": {
+    "@google-cloud/pubsub": "^0.20.1",
     "aws-sdk": "^2.330.0",
     "aws-serverless-express": "^3.3.5"
   },
