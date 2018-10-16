@@ -73,6 +73,24 @@ curl -X POST -d 'fizz=buzz' 'http://localhost:3000/slash/fizz'
 
 ## Lambda
 
+Deploy directly to AWS using [`terraform`](https://terraform.io) and the [`slackbot`](https://github.com/amancevice/terraform-aws-slackbot) module:
+
+
+```terraform
+module "slackbot" {
+  source                  = "amancevice/slackbot/aws"
+  api_description         = "My Slackbot REST API"
+  api_name                = "slackbot"
+  api_stage_name          = "v1"
+  slack_bot_access_token  = "<slack-bot-access-token>"
+  slack_client_id         = "<slack-client-id>"
+  slack_client_secret     = "<slack-client-secret>"
+  slack_signing_secret    = "<slack-signing-secret>"
+  slack_user_access_token = "<slack-user-access-token>"
+  slack_workspace_token   = "<slack-workspace-token>"
+}
+```
+
 The [`lambda.js`](./lambda.js) script shows how to deploy the app to Lambda.
 
 The script shows how to fetch additional environment variables using SecretsManager and publishing to SNS.
