@@ -123,6 +123,7 @@ function getOauth (req, res) {
  * @param {object} next Express callback.
  */
 function postCallback (req, res, next) {
+  req.body = JSON.parse(req.body.payload);
   res.locals.topic = `callback_${req.body.callback_id}`;
   next();
 }
