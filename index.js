@@ -25,6 +25,32 @@ function defaultPublish (payload, topic) {
 }
 
 /**
+ * Set stringify function for JSON body.
+ *
+ * @param {object} req Express request.
+ * @param {object} res Express response.
+ * @param {function} next Callback.
+ */
+function stringifyJSON(req, res, next) {
+  res.locals.stringify = JSON.stringify;
+  next();
+}
+
+/**
+ * Set stringify function for querystring body.
+ *
+ * @param {object} req Express request.
+ * @param {object} res Express response.
+ * @param {function} next Callback.
+ */
+function stringifyQueryString(req, res, next) {
+  const qs = require('querystring');
+  res.locals.stringify = qs.stringify;
+  next();
+}
+
+/**
+ * Get ENV.
  *
  * @param {object} req Express request.
  * @param {object} res Express response.
@@ -45,6 +71,7 @@ function getEnv(req, res, next) {
 }
 
 /**
+ * Verify request origin.
  *
  * @param {object} req Express request.
  * @param {object} res Express response.
@@ -57,13 +84,12 @@ function verifyRequest (req, res, next) {
     console.warn('VERIFICATION DISABLED');
     next();
   } else {
-    const qs = require('querystring');
     const signing_secret = env.SIGNING_SECRET;
     const signing_version = env.SIGNING_VERSION;
     const ts = req.headers['x-slack-request-timestamp'];
     const ret = req.headers['x-slack-signature'];
     const hmac = crypto.createHmac('sha256', signing_secret);
-    const data = `${signing_version}:${req.headers['x-slack-request-timestamp']}:${qs.stringify(req.body)}`;
+    const data = `${signing_version}:${ts}:${res.locals.stringify(req.body)}`;
     const exp = `${signing_version}=${hmac.update(data).digest('hex')}`;
     const delta = Math.abs(new Date()/1000 - ts);
     console.log(`SIGNATURES ${JSON.stringify({given: ret, calculated: exp})}`);
@@ -78,6 +104,7 @@ function verifyRequest (req, res, next) {
 }
 
 /**
+ * Get API spec. (not currently implemented)
  *
  * @param {object} req Express request.
  * @param {object} res Express response.
@@ -87,6 +114,7 @@ function getSpec (req, res) {
 }
 
 /**
+ * Handle GET /oauth
  *
  * @param {object} req Express request.
  * @param {object} res Express response.
@@ -119,6 +147,7 @@ function getOauth (req, res) {
 }
 
 /**
+ * Handle POST /callbacks
  *
  * @param {object} req Express request.
  * @param {object} res Express response.
@@ -131,6 +160,7 @@ function postCallback (req, res, next) {
 }
 
 /**
+ * Handle POST /events
  *
  * @param {object} req Express request.
  * @param {object} res Express response.
@@ -148,6 +178,7 @@ function postEvent (req, res, next) {
 }
 
 /**
+ * Handle POST /slash/:cmd
  *
  * @param {object} req Express request.
  * @param {object} res Express response.
@@ -182,9 +213,9 @@ app.set('fetchEnv', defaultFetchEnv);
 app.set('publish', defaultPublish);
 app.get('/', getSpec);
 app.get('/oauth', getEnv, getOauth);
-app.post('/callbacks', getEnv, verifyRequest, postCallback, publishBody);
-app.post('/events', getEnv, verifyRequest, postEvent, publishBody);
-app.post('/slash/:cmd', getEnv, verifyRequest, postSlashCmd, publishBody);
+app.post('/callbacks', getEnv, stringifyQueryString, verifyRequest, postCallback, publishBody);
+app.post('/events', getEnv, stringifyJSON, verifyRequest, postEvent, publishBody);
+app.post('/slash/:cmd', getEnv, stringifyQueryString, verifyRequest, postSlashCmd, publishBody);
 dotenv.config();
 
 module.exports = app;
