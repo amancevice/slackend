@@ -51,17 +51,19 @@ function getEnv(req, res, next) {
  * @param {function} next Callback.
  */
 function verifyRequest (req, res, next) {
+  console.log(`HEADERS ${JSON.stringify(req.headers)}`);
   console.log(`REQUEST ${JSON.stringify(req.body)}`);
   if (env.DISABLE_VERIFICATION) {
     console.warn('VERIFICATION DISABLED');
     next();
   } else {
+    const qs = require('querystring');
     const signing_secret = env.SIGNING_SECRET;
     const signing_version = env.SIGNING_VERSION;
     const ts = req.headers['x-slack-request-timestamp'];
     const ret = req.headers['x-slack-signature'];
     const hmac = crypto.createHmac('sha256', signing_secret);
-    const data = `${signing_version}:${req.headers['x-slack-request-timestamp']}:${req.body}`;
+    const data = `${signing_version}:${req.headers['x-slack-request-timestamp']}:${qs.stringify(req.body)}`;
     const exp = `${signing_version}=${hmac.update(data).digest('hex')}`;
     const delta = Math.abs(new Date()/1000 - ts);
     console.log(`SIGNATURES ${JSON.stringify({given: ret, calculated: exp})}`);
