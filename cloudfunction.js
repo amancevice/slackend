@@ -1,9 +1,10 @@
 'use strict';
 const dotenv = require('dotenv');
 const config = dotenv.config();
-const app = require('./index');
+const slackend = require('slackend');
+slackend.app.use('/', slackend.router);
 
-app.set('publish', (payload, topic) => {
+slackend.app.set('publish', (payload, topic) => {
   const PubSub = require('@google-cloud/pubsub');
   const pubsub = new PubSub();
   const data = Buffer.from(JSON.stringify(payload));
@@ -12,5 +13,5 @@ app.set('publish', (payload, topic) => {
 
 exports.handler = (req, res, next) => {
   req.url = process.env.ROUTE;
-  return app._router.handle(req, res, next);
+  return slackend.app._router.handle(req, res, next);
 };

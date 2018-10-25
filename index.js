@@ -207,15 +207,19 @@ function publishBody (req, res) {
 }
 
 const app = express();
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.json());
 app.set('fetchEnv', defaultFetchEnv);
 app.set('publish', defaultPublish);
-app.get('/', getSpec);
-app.get('/oauth', getEnv, getOauth);
-app.post('/callbacks', getEnv, stringifyQueryString, verifyRequest, postCallback, publishBody);
-app.post('/events', getEnv, stringifyJSON, verifyRequest, postEvent, publishBody);
-app.post('/slash/:cmd', getEnv, stringifyQueryString, verifyRequest, postSlashCmd, publishBody);
+const router = express.Router();
+router.use(bodyParser.urlencoded({extended: false}));
+router.use(bodyParser.json());
+router.get('/', getSpec);
+router.get('/oauth', getEnv, getOauth);
+router.post('/callbacks', getEnv, stringifyQueryString, verifyRequest, postCallback, publishBody);
+router.post('/events', getEnv, stringifyJSON, verifyRequest, postEvent, publishBody);
+router.post('/slash/:cmd', getEnv, stringifyQueryString, verifyRequest, postSlashCmd, publishBody);
 dotenv.config();
 
-module.exports = app;
+module.exports = {
+  app: app,
+  router: router,
+};

@@ -58,20 +58,20 @@ Send a sample request:
 
 ```bash
 # Callback
-curl -X POST \
-  -H 'Content-Type: application/json' \
-  -d '{"callback_id": "fizz"}' \
-  'http://localhost:3000/callbacks'
+curl --request POST \
+  --data 'payload=%7B%22callback_id%22%3A%22fizz%22%7D' \
+  --url 'http://localhost:3000/callbacks'
 
 # Event
-curl -X POST \
-  -H 'Content-Type: application/json' \
-  -d '{"type": "event_callback", "event": {"type": "team_join"}}' \
-  'http://localhost:3000/events'
-
+curl --request POST \
+  --header 'Content-Type: application/json' \
+  --data '{"type": "event_callback", "event": {"type": "team_join"}}' \
+  --url 'http://localhost:3000/events'
 
 # Slash command
-curl -X POST -d 'fizz=buzz' 'http://localhost:3000/slash/fizz'
+curl --request POST \
+  --data 'fizz=buzz' \
+  --url 'http://localhost:3000/slash/fizz'
 ```
 
 ## Deploy to AWS Lambda
