@@ -103,16 +103,17 @@ The [`lambda.js`](./lambda.js) script shows how to deploy the app using AWS Secr
 ```javascript
 'use strict';
 const awsServerlessExpress = require('aws-serverless-express');
-const app = require('slackend');
+const slackend = require('slackend');
 
-app.set('fetchEnv', () => {
+slackend.app.set('fetchEnv', () => {
   // Get ENV values
 });
 
-app.set('publish', (payload, topic) => {
+slackend.app.set('publish', (payload, topic) => {
   // Publish `payload` to `topic`
 });
 
+slackend.app.use('/', slackend.app.router);
 const server = awsServerlessExpress.createServer(app);
 exports.handler = (event, context) => awsServerlessExpress.proxy(server, event, context);
 ```
@@ -124,7 +125,7 @@ Supply additional environmental variables by setting the `fetchEnv` value of the
 Example:
 
 ```javascript
-app.set('fetchEnv', () => {
+slackend.app.set('fetchEnv', () => {
   return Promise.resolve(process.env);
 });
 ```
@@ -136,7 +137,7 @@ Set the `publish` value of the app to a function that takes a `payload` and `top
 Example:
 
 ```javascript
-app.set('publish', (payload, topic) => {
+slackend.app.set('publish', (payload, topic) => {
   return Promise.resolve({
     topic: topic,
     payload: payload
