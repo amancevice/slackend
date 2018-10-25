@@ -1,7 +1,15 @@
 language: node_js
 node_js:
-- "8"
+- '8'
 install:
 - npm install
 script:
 - npm test
+deploy:
+  provider: npm
+  email: alexander.mancevice@gmail.com
+  api_key:
+    secure: r3GEJ623PG1ew9iF+mzBAlW6O4VMc/3l0eqV7IBnCXQZ5c8VxRv1L2EDXiCK/tR9KwFngZdEOUhj1HS0vq0km9uPGz5W0LKvQom/WIZ5y+qXNV/egRGTOj2SnW/EaPGaRmS1C4KCghQdv+NI7INybxpySwcXr9YNDIPtPZ6OQV7Mr4XpfyiYHcXiz1pK6m0hcGP+J7/WySS5x4EPqJQrdKxwuc1bKOhwa+IpgXGcIVSgKomTpcLJ+TrbdBvuKwsHdfPs+pPzPUveyCn8MRm2PZ0OIgZfrOAtSZO4+w5YgMyCgKNeluzeiQWOyH3jOt7mw7mKyjYS67tt6i75FhdsM4T5qg/o06fgpALVu2PmR/l9iBhY/K2r91oxgE4GuMSyh/tg0HoZQdHRwQqc4Kv4mH5kJxjsy+OrlDrE1KMSOwmuZnI7asTa3qJaGBc/2cdZlSf6Ru7X7zWdLjp0qsuSDuHjX4ObHOQ6m8YAAvDuX2VFMTGvK/O++RqeJaAbpn6KWXscFEv13admsWbk37Gu1YOsWPXssXPas4endtS9Sf6sRD2Dh6hvSqXH6nXN1G52mTrarT94Eh6BPOJ79lYNUMi4g3lgNzIg7W3+uEUYg1yWKXaI/M2cd/lP7TeIU2Yu7kTQa4sbT3NzgEgJMwJBE1b+4dHx4k/FRRUQ5+N4gNs=
+  on:
+    tags: true
+    repo: amancevice/slackend
