@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
 const express = require('express');
+const qs = require('querystring');
 
 let env;
 
@@ -22,31 +23,6 @@ function defaultFetchEnv () {
 function defaultPublish (payload, topic) {
   console.log(`PUBLISH ${JSON.stringify({topic: topic})}`);
   return Promise.resolve(payload);
-}
-
-/**
- * Set stringify function for JSON body.
- *
- * @param {object} req Express request.
- * @param {object} res Express response.
- * @param {function} next Callback.
- */
-function stringifyJSON(req, res, next) {
-  res.locals.stringify = JSON.stringify;
-  next();
-}
-
-/**
- * Set stringify function for querystring body.
- *
- * @param {object} req Express request.
- * @param {object} res Express response.
- * @param {function} next Callback.
- */
-function stringifyQueryString(req, res, next) {
-  const qs = require('querystring');
-  res.locals.stringify = qs.stringify;
-  next();
 }
 
 /**
@@ -89,13 +65,16 @@ function verifyRequest (req, res, next) {
     const ts = req.headers['x-slack-request-timestamp'];
     const ret = req.headers['x-slack-signature'];
     const hmac = crypto.createHmac('sha256', signing_secret);
-    const data = `${signing_version}:${ts}:${res.locals.stringify(req.body)}`;
+    const data = `${signing_version}:${ts}:${req.body}`;
+    console.log(`SIGNING DATA ${data}`);
     const exp = `${signing_version}=${hmac.update(data).digest('hex')}`;
     const delta = Math.abs(new Date()/1000 - ts);
     console.log(`SIGNATURES ${JSON.stringify({given: ret, calculated: exp})}`);
     if (delta > 60 * 5) {
+      console.error('Request too old');
       res.status(403).send({error: 'Request too old'});
     } else if (ret !== exp) {
+      console.error('Signatures do not match');
       res.status(403).send({error: 'Signatures do not match'});
     } else {
       next();
@@ -154,7 +133,7 @@ function getOauth (req, res) {
  * @param {object} next Express callback.
  */
 function postCallback (req, res, next) {
-  req.body = JSON.parse(req.body.payload);
+  req.body = JSON.parse(qs.parse(req.body).payload);
   res.locals.topic = `callback_${req.body.callback_id}`;
   next();
 }
@@ -167,6 +146,7 @@ function postCallback (req, res, next) {
  * @param {object} next Express callback.
  */
 function postEvent (req, res, next) {
+  req.body = JSON.parse(req.body);
   if (req.body.type === 'url_verification') {
     const challenge = {challenge: req.body.challenge};
     console.log(`CHALLENGE ${JSON.stringify(challenge)}`);
@@ -185,6 +165,7 @@ function postEvent (req, res, next) {
  * @param {object} next Express callback.
  */
 function postSlashCmd (req, res, next) {
+  req.body = qs.parse(req.body);
   res.locals.topic = `slash_${req.params.cmd}`;
   next();
 }
@@ -210,13 +191,12 @@ const app = express();
 app.set('fetchEnv', defaultFetchEnv);
 app.set('publish', defaultPublish);
 const router = express.Router();
-router.use(bodyParser.urlencoded({extended: false}));
-router.use(bodyParser.json());
+router.use(bodyParser.text({type: '*/*'}));
 router.get('/', getSpec);
 router.get('/oauth', getEnv, getOauth);
-router.post('/callbacks', getEnv, stringifyQueryString, verifyRequest, postCallback, publishBody);
-router.post('/events', getEnv, stringifyJSON, verifyRequest, postEvent, publishBody);
-router.post('/slash/:cmd', getEnv, stringifyQueryString, verifyRequest, postSlashCmd, publishBody);
+router.post('/callbacks', getEnv, verifyRequest, postCallback, publishBody);
+router.post('/events', getEnv, verifyRequest, postEvent, publishBody);
+router.post('/slash/:cmd', getEnv, verifyRequest, postSlashCmd, publishBody);
 dotenv.config();
 
 module.exports = {
