@@ -76,21 +76,28 @@ curl --request POST \
 
 ## Deploy to AWS Lambda
 
-Deploy directly to AWS using [`terraform`](https://terraform.io) and the [`slackbot`](https://github.com/amancevice/terraform-aws-slackbot) module:
+Deploy directly to AWS using [`terraform`](https://terraform.io) and the [`slackbot`](https://github.com/amancevice/terraform-aws-slackbot) + [`slackbot-secrets`](https://github.com/amancevice/terraform-aws-slackbot-secrets) modules:
 
 
-```terraform
-module "slackbot" {
-  source                  = "amancevice/slackbot/aws"
-  api_description         = "My Slackbot REST API"
-  api_name                = "slackbot"
-  api_stage_name          = "v1"
-  slack_bot_access_token  = "<slack-bot-access-token>"
-  slack_client_id         = "<slack-client-id>"
-  slack_client_secret     = "<slack-client-secret>"
-  slack_signing_secret    = "<slack-signing-secret>"
-  slack_user_access_token = "<slack-user-access-token>"
-  slack_workspace_token   = "<slack-workspace-token>"
+```hcl
+module slackbot_secret {
+  source                  = "amancevice/slackbot-secrets/aws"
+  kms_key_alias           = "alias/slack/your-kms-key-alias"
+  secret_name             = "slack/your-secret-name"
+  slack_bot_access_token  = "${var.slack_bot_access_token}"
+  slack_client_id         = "${var.slack_client_id}"
+  slack_client_secret     = "${var.slack_client_secret}"
+  slack_signing_secret    = "${var.slack_signing_secret}"
+  slack_user_access_token = "${var.slack_user_access_token}"
+}
+
+module slackbot {
+  source          = "amancevice/slackbot/aws"
+  api_description = "My Slack REST API"
+  api_name        = "<my-api>"
+  api_stage_name  = "<my-api-stage>"
+  secret_arn      = "${module.slackbot_secret.secret_arn}"
+  kms_key_id      = "${module.slackbot_secret.kms_key_id}"
 }
 ```
 
