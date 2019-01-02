@@ -81,14 +81,14 @@ Deploy directly to AWS using [`terraform`](https://terraform.io) and the [`slack
 
 ```hcl
 module slackbot_secret {
-  source                  = "amancevice/slackbot-secrets/aws"
-  kms_key_alias           = "alias/slack/your-kms-key-alias"
-  secret_name             = "slack/your-secret-name"
-  slack_bot_access_token  = "${var.slack_bot_access_token}"
-  slack_client_id         = "${var.slack_client_id}"
-  slack_client_secret     = "${var.slack_client_secret}"
-  slack_signing_secret    = "${var.slack_signing_secret}"
-  slack_user_access_token = "${var.slack_user_access_token}"
+  source               = "amancevice/slackbot-secrets/aws"
+  kms_key_alias        = "alias/slack/your-kms-key-alias"
+  secret_name          = "slack/your-secret-name"
+  slack_bot_token      = "${var.slack_bot_access_token}"
+  slack_client_id      = "${var.slack_client_id}"
+  slack_client_secret  = "${var.slack_client_secret}"
+  slack_signing_secret = "${var.slack_signing_secret}"
+  slack_user_token     = "${var.slack_user_access_token}"
 }
 
 module slackbot {
