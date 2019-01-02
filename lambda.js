@@ -6,7 +6,7 @@ const baseUrl = process.env.SLACKEND_BASE_URL || '/';
 slackend.app.set('fetchEnv', () => {
   const AWS = require('aws-sdk');
   const secretsmanager = new AWS.SecretsManager();
-  const secret = process.env.AWS_SECRET;
+  const secret = process.env.SLACK_SECRET;
   return secretsmanager.getSecretValue({
     SecretId: secret,
   }).promise().then((data) => {

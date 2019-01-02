@@ -2,10 +2,10 @@
   "dependencies": {
     "@slack/client": "^4.8.0",
     "body-parser": "^1.18.3",
-    "dotenv": "^6.1.0",
     "express": "^4.16.3"
   },
   "scripts": {
+    "build": "docker-compose run npm install && docker-compose down",
     "start": "node server.js",
     "test": "mocha"
   },

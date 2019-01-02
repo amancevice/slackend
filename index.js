@@ -1,7 +1,6 @@
 'use strict';
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
-const dotenv = require('dotenv');
 const express = require('express');
 const qs = require('querystring');
 
@@ -197,7 +196,6 @@ router.get('/oauth', getEnv, getOauth);
 router.post('/callbacks', getEnv, verifyRequest, postCallback, publishBody);
 router.post('/events', getEnv, verifyRequest, postEvent, publishBody);
 router.post('/slash/:cmd', getEnv, verifyRequest, postSlashCmd, publishBody);
-dotenv.config();
 
 module.exports = {
   app: app,
