@@ -1,8 +1,8 @@
 'use strict';
 const bodyParser = require('body-parser');
-const crypto = require('crypto');
-const express = require('express');
-const qs = require('querystring');
+const crypto     = require('crypto');
+const express    = require('express');
+const qs         = require('querystring');
 
 let env;
 
@@ -59,15 +59,15 @@ function verifyRequest (req, res, next) {
     console.warn('VERIFICATION DISABLED');
     next();
   } else {
-    const signing_secret = env.SIGNING_SECRET;
+    const signing_secret  = env.SIGNING_SECRET;
     const signing_version = env.SIGNING_VERSION;
-    const ts = req.headers['x-slack-request-timestamp'];
-    const ret = req.headers['x-slack-signature'];
-    const hmac = crypto.createHmac('sha256', signing_secret);
-    const data = `${signing_version}:${ts}:${req.body}`;
+    const ts              = req.headers['x-slack-request-timestamp'];
+    const ret             = req.headers['x-slack-signature'];
+    const hmac            = crypto.createHmac('sha256', signing_secret);
+    const data            = `${signing_version}:${ts}:${req.body}`;
+    const exp             = `${signing_version}=${hmac.update(data).digest('hex')}`;
+    const delta           = Math.abs(new Date()/1000 - ts);
     console.log(`SIGNING DATA ${data}`);
-    const exp = `${signing_version}=${hmac.update(data).digest('hex')}`;
-    const delta = Math.abs(new Date()/1000 - ts);
     console.log(`SIGNATURES ${JSON.stringify({given: ret, calculated: exp})}`);
     if (delta > 60 * 5) {
       console.error('Request too old');
@@ -100,12 +100,12 @@ function getSpec (req, res) {
 function getOauth (req, res) {
   console.log(`REQUEST ${JSON.stringify(req.body)}`);
   const { WebClient } = require('@slack/client');
-  const token = env.BOT_ACCESS_TOKEN;
-  const client_id = env.CLIENT_ID;
+  const token         = env.BOT_ACCESS_TOKEN;
+  const client_id     = env.CLIENT_ID;
   const client_secret = env.CLIENT_SECRET;
-  const redirect_uri = env.REDIRECT_URI;
-  const slack = new WebClient(token);
-  const options = {
+  const redirect_uri  = env.REDIRECT_URI;
+  const slack         = new WebClient(token);
+  const options       = {
     code: req.query.code,
     client_id: client_id,
     client_secret: client_secret,
@@ -114,8 +114,8 @@ function getOauth (req, res) {
   return slack.oauth.access(options).then((ret) => {
     console.log(`AUTH ${JSON.stringify(ret)}`);
     const redirect = env.OAUTH_REDIRECT || `https://slack.com/app_redirect?team=${ret.team_id}`;
-    const topic = `${env.PUBLISHER_PREFIX}oauth`;
-    const publish = app.get('publish');
+    const topic    = `${env.PUBLISHER_PREFIX}oauth`;
+    const publish  = app.get('publish');
     publish(ret, topic).then((ret) => {
       res.redirect(redirect);
     }).catch((err) => {
@@ -132,7 +132,7 @@ function getOauth (req, res) {
  * @param {object} next Express callback.
  */
 function postCallback (req, res, next) {
-  req.body = JSON.parse(qs.parse(req.body).payload);
+  req.body         = JSON.parse(qs.parse(req.body).payload);
   res.locals.topic = `callback_${req.body.callback_id}`;
   next();
 }
@@ -164,7 +164,7 @@ function postEvent (req, res, next) {
  * @param {object} next Express callback.
  */
 function postSlashCmd (req, res, next) {
-  req.body = qs.parse(req.body);
+  req.body         = qs.parse(req.body);
   res.locals.topic = `slash_${req.params.cmd}`;
   next();
 }
@@ -176,7 +176,7 @@ function postSlashCmd (req, res, next) {
  * @param {object} res Express response.
  */
 function publishBody (req, res) {
-  const topic = `${env.PUBLISHER_PREFIX}${res.locals.topic}`;
+  const topic   = `${env.PUBLISHER_PREFIX}${res.locals.topic}`;
   const publish = app.get('publish');
   publish(req.body, topic).then((ret) => {
     console.log(`PUBLISHED ${JSON.stringify(ret)}`);
@@ -198,6 +198,6 @@ router.post('/events', getEnv, verifyRequest, postEvent, publishBody);
 router.post('/slash/:cmd', getEnv, verifyRequest, postSlashCmd, publishBody);
 
 module.exports = {
-  app: app,
+  app:    app,
   router: router,
 };

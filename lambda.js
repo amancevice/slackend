@@ -4,16 +4,13 @@ const slackend = require('slackend');
 const baseUrl = process.env.SLACKEND_BASE_URL || '/';
 
 slackend.app.set('fetchEnv', () => {
-  const AWS = require('aws-sdk');
+  const AWS            = require('aws-sdk');
   const secretsmanager = new AWS.SecretsManager();
-  const secret = process.env.SLACK_SECRET;
-  return secretsmanager.getSecretValue({
+  const secret         = process.env.SLACK_SECRET;
+  return SecretsManager.getSecretValue({
     SecretId: secret,
   }).promise().then((data) => {
-    const secrets = JSON.parse(data.SecretString);
-    Object.keys(secrets).forEach((key) => {
-      process.env[key] = secrets[key];
-    });
+    Object.assign(process.env, JSON.parse(data.SecretString));
     return process.env;
   });
 });

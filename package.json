@@ -1,18 +1,14 @@
 {
+  "author": "smallweirdnumber",
+  "bugs": {
+    "url": "https://github.com/amancevice/slackend/issues"
+  },
   "dependencies": {
     "@slack/client": "^4.8.0",
     "body-parser": "^1.18.3",
     "express": "^4.16.3"
   },
-  "scripts": {
-    "build": "docker-compose run npm install && docker-compose down",
-    "start": "node server.js",
-    "test": "mocha"
-  },
-  "name": "slackend",
   "description": "Simple asynchronous back end for Slack apps",
-  "version": "0.4.0",
-  "main": "index.js",
   "devDependencies": {
     "@google-cloud/pubsub": "^0.20.1",
     "aws-sdk": "^2.330.0",
@@ -20,20 +16,24 @@
     "mocha": "^5.2.0",
     "supertest": "^3.3.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/amancevice/slackend.git"
-  },
+  "homepage": "https://github.com/amancevice/slackend#readme",
   "keywords": [
     "slack",
     "serverless",
     "aws",
     "lambda"
   ],
-  "author": "smallweirdnumber",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/amancevice/slackend/issues"
+  "main": "index.js",
+  "name": "slackend",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amancevice/slackend.git"
   },
-  "homepage": "https://github.com/amancevice/slackend#readme"
+  "scripts": {
+    "build": "docker-compose run npm install && docker-compose down",
+    "start": "node server.js",
+    "test": "mocha"
+  },
+  "version": "0.5.0"
 }
