@@ -30,6 +30,36 @@ The fetching of additional/secret environmental values necessary for connecting 
 
 - Slack has a strict 3-second lifetime for many API operations, so it is critical that your asynchronous tasks complete quickly. Cold start times of some serverless computing platforms may be prohibitively slow.
 
+## Usage
+
+At its core, `slackend` is an [Express](https://expressjs.com) application with several routes defined for handling Slack events. None of the routes are configured to respond to the request. This is done deliberately so users can customize the behavior of the app.
+
+The Slack message and an inferred topic name are stored in the `res.locals` object and can be used to publish the request to your preferred messaging/queueing service.
+
+Here is an example usage that simply logs the request to the console:
+
+```javascript
+const slackend = require('slackend');
+
+// Create express app
+const app = slackend({
+  client_id:       process.env.SLACK_CLIENT_ID,
+  client_secret:   process.env.SLACK_CLIENT_SECRET,
+  redirect_uri:    process.env.SLACK_OAUTH_REDIRECT_URI,
+  signing_secret:  process.env.SLACK_SIGNING_SECRET,
+  signing_version: process.env.SLACK_SIGNING_VERSION,
+  token:           process.env.SLACK_TOKEN,
+});
+
+// You *must* add a callback that responds to the request
+app.use((req, res) => {
+  console.log(res.locals);
+  res.json({ok: true});
+});
+```
+
+All of the configuration options to `slackend()` are optional, but omitting the `signing_secret` will disable the verification step where received requests are confirmed as originating from Slack. Disabling verification can also be done by setting the environmental variable `DISABLE_VERIFICATION=1`.
+
 ## Local Setup
 
 Run a local instance of your slack app by cloning this repository, configuring settings, installing dependencies, and starting the express server.
@@ -99,55 +129,4 @@ module slackbot {
   secret_arn      = "${module.slackbot_secret.secret_arn}"
   kms_key_id      = "${module.slackbot_secret.kms_key_id}"
 }
-```
-
-## Customization
-
-Set app values for `fetchEnv` and `publish` to customize the app's behavior.
-
-The [`lambda.js`](./lambda.js) script shows how to deploy the app using AWS SecretsManager to fetch Slack secrets and SNS to publish requests.
-
-```javascript
-'use strict';
-const awsServerlessExpress = require('aws-serverless-express');
-const slackend = require('slackend');
-
-slackend.app.set('fetchEnv', () => {
-  // Get ENV values
-});
-
-slackend.app.set('publish', (payload, topic) => {
-  // Publish `payload` to `topic`
-});
-
-slackend.app.use('/', slackend.app.router);
-const server = awsServerlessExpress.createServer(app);
-exports.handler = (event, context) => awsServerlessExpress.proxy(server, event, context);
-```
-
-### Environment
-
-Supply additional environmental variables by setting the `fetchEnv` value of the app to a function that takes no arguments and returns a promise to update and return `process.env`.
-
-Example:
-
-```javascript
-slackend.app.set('fetchEnv', () => {
-  return Promise.resolve(process.env);
-});
-```
-
-### Publishing
-
-Set the `publish` value of the app to a function that takes a `payload` and `topic` and returns a promise to publish.
-
-Example:
-
-```javascript
-slackend.app.set('publish', (payload, topic) => {
-  return Promise.resolve({
-    topic: topic,
-    payload: payload
-  }).then(console.log);
-});
 ```
