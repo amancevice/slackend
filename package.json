@@ -34,5 +34,5 @@
     "build": "docker-compose run npm install && docker-compose down",
     "test": "mocha"
   },
-  "version": "1.0.0a1"
+  "version": "1.0.0"
 }

@@ -3,13 +3,8 @@ const express  = require('express');
 const request  = require('supertest');
 const slackend = require('../index');
 
-const mockslackapi = {
-  oauth: {
-    access: async (options) => {
-      return {token: 'fizz'};
-    },
-  },
-}
+const mockaccess   = async (options) => { return {token: 'fizz'}; };
+const mockslackapi = {oauth: {access: mockaccess}};
 
 const app = slackend({slackapi: mockslackapi}).use((req, res) => res.json(res.locals));
 const err = slackend({signing_secret: 'fake'}).use((req, res) => res.json(res.locals));
