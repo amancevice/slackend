@@ -17,11 +17,11 @@ function verifyRequest(options = {}) {
   return (req, res, next) => {
     logger.debug(`HEADERS ${JSON.stringify(req.headers)}`);
     logger.debug(`BODY ${JSON.stringify(req.body)}`);
-    if (options.signing_secret === undefined) {
-      logger.warn('VERIFICATION DISABLED - NO SIGNING SECRET');
-      next();
-    } else if (process.env.DISABLE_VERIFICATION) {
+    if (process.env.DISABLE_VERIFICATION) {
       logger.warn('VERIFICATION DISABLED - ENV');
+      next();
+    } else if (options.signing_secret === undefined) {
+      logger.warn('VERIFICATION DISABLED - NO SIGNING SECRET');
       next();
     } else {
       const ts    = req.headers['x-slack-request-timestamp'];
@@ -29,7 +29,7 @@ function verifyRequest(options = {}) {
       const hmac  = crypto.createHmac('sha256', options.signing_secret);
       const data  = `${options.signing_version}:${ts}:${req.body}`;
       const exp   = `${options.signing_version}=${hmac.update(data).digest('hex')}`;
-      const delta = Math.abs(new Date()/1000 - ts);
+      const delta = Math.abs(new Date() / 1000 - ts);
       logger.debug(`SIGNING DATA ${data}`);
       logger.debug(`SIGNATURES ${JSON.stringify({given: ret, calculated: exp})}`);
       if (delta > 60 * 5) {
