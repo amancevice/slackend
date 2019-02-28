@@ -59,9 +59,7 @@ describe('POST /events', () => {
       .set('Accept', 'application/json')
       .expect(200, exp, done);
   });
-});
 
-describe('POST /events challenge', () => {
   it('responds with challenge', (done) => {
     request(app)
       .post('/events')
