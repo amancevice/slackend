@@ -11,9 +11,9 @@ const mockslackapierr = {oauth: {access: mockaccesserr}};
 const app = slackend({slackapi: mockslackapi}).use((req, res) => res.json(res.locals));
 const err = slackend({slackapi: mockslackapierr, signing_secret: 'fake'}).use((req, res) => res.json(res.locals));
 
-describe('GET /oauth', () => {
+describe('API | GET /oauth', function() {
 
-  it('Completes the OAuth workflow', (done) => {
+  it('Completes the OAuth workflow', function(done) {
     let exp = {
       message: {token: 'fizz'},
       topic: 'oauth',
@@ -24,7 +24,7 @@ describe('GET /oauth', () => {
       .expect(200, exp, done);
   });
 
-  it('Rejects the OAuth workflow', (done) => {
+  it('Rejects the OAuth workflow', function(done) {
     let exp = {error: 'BOOM'};
     request(err)
       .get('/oauth')
@@ -33,8 +33,8 @@ describe('GET /oauth', () => {
   });
 });
 
-describe('POST /callbacks', () => {
-  it('responds with message and topic', (done) => {
+describe('API | POST /callbacks', function() {
+  it('responds with message and topic', function(done) {
     let exp = {
       message: {callback_id: 'fizz'},
       topic: 'callback_fizz',
@@ -47,8 +47,8 @@ describe('POST /callbacks', () => {
   });
 });
 
-describe('POST /events', () => {
-  it('responds with message and topic', (done) => {
+describe('API | POST /events', function() {
+  it('responds with message and topic', function(done) {
     let exp = {
       message: {event: {type: 'team_join'}, type: 'event_callback'},
       topic: 'event_team_join',
@@ -60,7 +60,7 @@ describe('POST /events', () => {
       .expect(200, exp, done);
   });
 
-  it('responds with challenge', (done) => {
+  it('responds with challenge', function(done) {
     request(app)
       .post('/events')
       .send({type: 'url_verification', challenge: 'fizzbuzz'})
@@ -69,8 +69,8 @@ describe('POST /events', () => {
   });
 });
 
-describe('POST /slash/:cmd', () => {
-  it('responds with message and topic', (done) => {
+describe('API | POST /slash/:cmd', function() {
+  it('responds with message and topic', function(done) {
     let exp = {
       message: {fizz: 'buzz'},
       topic: 'slash_fizz',
@@ -83,8 +83,8 @@ describe('POST /slash/:cmd', () => {
   });
 });
 
-describe('Verification', () => {
-  it('Errors with bad signature', (done) => {
+describe('API | Verification', function() {
+  it('Errors with bad signature', function(done) {
     request(err)
       .post('/callbacks')
       .send('payload=%7B%22callback_id%22%3A%22fizz%22%7D')
@@ -92,7 +92,7 @@ describe('Verification', () => {
       .expect(403, {error: 'Signatures do not match'}, done);
   });
 
-  it('Errors with bad timestamp', (done) => {
+  it('Errors with bad timestamp', function(done) {
     request(err)
       .post('/callbacks')
       .send('payload=%7B%22callback_id%22%3A%22fizz%22%7D')
@@ -102,7 +102,7 @@ describe('Verification', () => {
       .expect(403, {error: 'Request too old'}, done);
   });
 
-  it('Skips verification', (done) => {
+  it('Skips verification', function(done) {
     let exp = {
       message: {fizz: 'buzz'},
       topic: 'slash_fizz',
@@ -119,7 +119,7 @@ describe('Verification', () => {
       })
   });
 
-  it('Verifies the request', (done) => {
+  it('Verifies the request', function(done) {
     let ts   = new Date() / 1000;
     let hmac = crypto.createHmac('sha256', 'fake');
     let data = `v0:${ts}:payload=%7B%22callback_id%22%3A%22fizz%22%7D`;
