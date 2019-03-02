@@ -66,14 +66,14 @@ async function handler (event, context) {
   return await awsServerlessExpress.proxy(server, event, context, 'PROMISE').promise;
 }
 
-exports.handler = handler;
+exports.handler       = handler;
+exports.postEphemeral = postGen('postEphemeral');
+exports.postMessage   = postGen('postMessage');
 
 if (process.env.NODE_ENV === 'test') {
   exports.clients       = clients;
   exports.env           = env;
   exports.getEnv        = getEnv;
   exports.publish       = publish;
-  exports.postEphemeral = postGen('postEphemeral');
-  exports.postMessage   = postGen('postMessage');
   exports.server        = server;
 }
