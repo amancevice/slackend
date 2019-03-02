@@ -107,7 +107,7 @@ describe('AWS | Handler', function() {
   it('Handles the request', async function() {
     const event   = {path: '/fizz', httpMethod: 'POST'};
     const context = {succeed: () => {}};
-    const ret     = await slackend.handler(event, context);
+    const ret     = await slackend(event, context);
     assert.equal(ret.statusCode, 204);
     assert.equal(ret.body, '');
     slackend.server.close();

@@ -66,7 +66,7 @@ async function handler (event, context) {
   return await awsServerlessExpress.proxy(server, event, context, 'PROMISE').promise;
 }
 
-exports.handler = handler;
+exports = module.exports = handler;
 
 if (process.env.NODE_ENV === 'test') {
   exports.clients       = clients;
