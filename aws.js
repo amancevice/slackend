@@ -1,48 +1,72 @@
 'use strict';
-const aws                  = require('aws-sdk');
+const {SecretsManager,SNS} = require('aws-sdk');
 const awsServerlessExpress = require('aws-serverless-express');
 const express              = require('express');
 const slackend             = require('./index');
-const slack                = require('@slack/client');
-
-const AWS_SECRET = process.env.AWS_SECRET;
-
-const app    = express();
-const server = awsServerlessExpress.createServer(app);
-
-let env, clients = {
-  secretsmanager: new aws.SecretsManager(),
-  sns:            new aws.SNS(),
-};
+const {WebClient}          = require('@slack/client');
 
 slackend.logger.debug.log = console.log.bind(console);
 slackend.logger.info.log  = console.log.bind(console);
 slackend.logger.warn.log  = console.log.bind(console);
 slackend.logger.error.log = console.log.bind(console);
 
-function getEnv (options) {
-  slackend.logger.info(`GET ${JSON.stringify(options)}`);
-  return clients.secretsmanager.getSecretValue(options).promise().then((secret) => {
-    env = Object.assign(process.env, JSON.parse(secret.SecretString));
-    clients.slack = clients.slack || new slack.WebClient(process.env.SLACK_TOKEN);
-    return env;
-  });
+let app, secretsmanager, server, slack, sns;
+
+async function getApp () {
+  await getEnv();
+  app = express();
+  app.use(process.env.BASE_URL || '/', slackend({
+    client_id:       process.env.SLACK_CLIENT_ID,
+    client_secret:   process.env.SLACK_CLIENT_SECRET,
+    redirect_uri:    process.env.SLACK_OAUTH_REDIRECT_URI,
+    signing_secret:  process.env.SLACK_SIGNING_SECRET,
+    signing_version: process.env.SLACK_SIGNING_VERSION,
+    token:           process.env.SLACK_TOKEN,
+  }), publish);
+  return app;
 }
 
-function postGen (method) {
+async function getEnv () {
+  const secret = await secretsmanager.getSecretValue({SecretId: process.env.AWS_SECRET}).promise();
+  return Object.assign(process.env, JSON.parse(secret.SecretString));
+}
+
+async function getServer () {
+  if (!server) {
+    app    = await getApp();
+    server = awsServerlessExpress.createServer(app);
+  }
+  return server;
+}
+
+async function getSlack () {
+  if (!slack) {
+    await getEnv();
+    slack = new WebClient(process.env.SLACK_TOKEN);
+  }
+  return slack;
+}
+
+async function handler (event, context) {
+  slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
+  await getServer();
+  return await awsServerlessExpress.proxy(server, event, context, 'PROMISE').promise;
+}
+
+function post (method) {
   return async (event) => {
     slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
-    await Promise.resolve(env || getEnv({SecretId: AWS_SECRET}));
-    const send  = clients.slack.chat[method];
-    const msgs  = event.Records.map((rec) => JSON.parse(rec.Sns.Message));
-    return Promise.all(msgs.map(send));
+    await getSlack();
+    const func = slack.chat[method];
+    const msgs = event.Records.map((rec) => JSON.parse(rec.Sns.Message));
+    return await Promise.all(msgs.map(func));
   };
 }
 
 function publish (req, res) {
   res.locals.topic = `${process.env.AWS_SNS_PREFIX || ''}${res.locals.topic}`;
   slackend.logger.info(`PUT ${JSON.stringify(res.locals)}`);
-  return clients.sns.publish({
+  return sns.publish({
     Message:  JSON.stringify(res.locals.message),
     TopicArn: res.locals.topic,
   }).promise().then(() => {
@@ -52,28 +76,19 @@ function publish (req, res) {
   });
 }
 
-async function handler (event, context) {
-  slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
-  await Promise.resolve(env || getEnv({SecretId: AWS_SECRET}));
-  app.use(process.env.BASE_URL || '/', slackend({
-    client_id:       process.env.SLACK_CLIENT_ID,
-    client_secret:   process.env.SLACK_CLIENT_SECRET,
-    redirect_uri:    process.env.SLACK_OAUTH_REDIRECT_URI,
-    signing_secret:  process.env.SLACK_SIGNING_SECRET,
-    signing_version: process.env.SLACK_SIGNING_VERSION,
-    token:           process.env.SLACK_TOKEN,
-  }), publish);
-  return await awsServerlessExpress.proxy(server, event, context, 'PROMISE').promise;
-}
-
-exports.handler       = handler;
-exports.postEphemeral = postGen('postEphemeral');
-exports.postMessage   = postGen('postMessage');
-
-if (process.env.NODE_ENV === 'test') {
-  exports.clients       = clients;
-  exports.env           = env;
-  exports.getEnv        = getEnv;
-  exports.publish       = publish;
-  exports.server        = server;
-}
+exports = module.exports = (options = {}) => {
+  secretsmanager = options.secretsmanager || new SecretsManager();
+  server         = options.server;
+  slack          = options.slack;
+  sns            = options.sns || new SNS();
+  return {
+    getApp:        getApp,
+    getEnv:        getEnv,
+    getServer:     getServer,
+    getSlack:      getSlack,
+    handler:       handler,
+    postEphemeral: post('postEphemeral'),
+    postMessage:   post('postMessage'),
+    publish:       publish,
+  }
+};
