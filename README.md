@@ -2,14 +2,16 @@
 
 A simple, asynchronous back end for your Slack app.
 
-The service intentionally does very little: it accepts an incoming request, verifies its origin, and publishes the payload to a queue/trigger for asynchronous processing.
+The app intentionally does very little: it is essentially middleware for [ExpressJS](https://expressjs.com). It accepts an incoming request, verifies its origin, and passes the request to the next callback.
+
+The user is expected to configure a callback that publishes the payload to a queue/trigger for asynchronous processing.
 
 Endpoints are provided for:
 
 - `/callbacks` publishes [interactive messages](https://api.slack.com/interactive-messages)
 - `/events` publishes events from the [Events API](https://api.slack.com/events-api)
-- `/slash/:cmd` publishes [slash commands](https://api.slack.com/slash-commands)
 - `/oauth` completes the [OAuth2](https://api.slack.com/docs/oauth) workflow
+- `/slash/:cmd` publishes [slash commands](https://api.slack.com/slash-commands)
 
 Without additional configuration, request payloads are simply published to `console.log`.
 
