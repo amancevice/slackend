@@ -3,13 +3,13 @@ const express  = require('express');
 const request  = require('supertest');
 const slackend = require('../index');
 
-const mockaccess      = async (options) => { return {token: 'fizz'}; };
-const mockaccesserr   = async (options) => { return Promise.reject('BOOM'); };
-const mockslackapi    = {oauth: {access: mockaccess}};
-const mockslackapierr = {oauth: {access: mockaccesserr}};
+const mockaccess    = async (options) => { return {token: 'fizz'}; };
+const mockaccesserr = async (options) => { return Promise.reject('BOOM'); };
+const mockslack     = {oauth: {access: mockaccess}};
+const mockslackerr  = {oauth: {access: mockaccesserr}};
 
-const app = slackend({slackapi: mockslackapi}).use((req, res) => res.json(res.locals));
-const err = slackend({slackapi: mockslackapierr, signing_secret: 'fake'}).use((req, res) => res.json(res.locals));
+const app = slackend({slack: mockslack}).use((req, res) => res.json(res.locals));
+const err = slackend({slack: mockslackerr, signing_secret: 'fake'}).use((req, res) => res.json(res.locals));
 
 describe('API | GET /oauth', function() {
 

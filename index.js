@@ -1,10 +1,10 @@
 'use strict';
-const bodyParser = require('body-parser');
-const debug      = require('debug');
-const crypto     = require('crypto');
-const express    = require('express');
-const qs         = require('querystring');
-const slack      = require('@slack/client');
+const bodyParser  = require('body-parser');
+const debug       = require('debug');
+const crypto      = require('crypto');
+const express     = require('express');
+const qs          = require('querystring');
+const {WebClient} = require('@slack/client');
 
 const logger = {
   debug: debug('slackend:debug'),
@@ -47,8 +47,8 @@ function verifyRequest(options = {}) {
 
 function handleOauth(options = {}) {
   return (req, res, next) => {
-    const slackapi = options.slackapi || new slack.WebClient(options.token);
-    slackapi.oauth.access({
+    const slack = options.slack || new WebClient(options.token);
+    slack.oauth.access({
       code:          req.query.code,
       client_id:     options.client_id,
       client_secret: options.client_secret,
