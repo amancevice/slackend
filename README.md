@@ -34,7 +34,7 @@ Deploying a version of this app to Amazon Web Services (AWS) serverless offering
 
 **API Gateway** receives and routes all requests using the catchall `/{proxy+}` resource and processed using a single **Lambda function** integration.
 
-The **Lambda function** starts a proxy express server to handle the request and the request is assigned to a specific **SNS topic** meant to handle that type of message.
+On cold starts, the **Lambda function** pulls its Slack tokens/secrets from its encrypted **SecretsManager** secret, starts a proxy express server, and publishes the request JSON to a specific **SNS topic** meant to handle that type of message. On warm starts the environment and server are cached and the request payload is published without needing to re-fetch the app secrets.
 
 Each Slack message &mdash; an OAuth request, a workspace event, a user-initiated callback, or a custom slash command &mdash; is published to a topic specifically for that event and the API responds to Slack with a `204 - No Content` status code.
 
@@ -131,6 +131,11 @@ module slackbot_secret {
   slack_client_secret  = "${var.slack_client_secret}"
   slack_signing_secret = "${var.slack_signing_secret}"
   slack_user_token     = "${var.slack_user_token}"
+
+  // Optional additional secrets
+  secrets {
+    FIZZ = "buzz"
+  }
 }
 
 module slackbot {
