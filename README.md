@@ -2,9 +2,7 @@
 
 A simple, asynchronous back end for your Slack app.
 
-The app intentionally does very little: it is essentially middleware for [ExpressJS](https://expressjs.com). It accepts an incoming request, verifies its origin, and passes the request to the next callback.
-
-The user is expected to configure a callback that publishes the payload to a queue/trigger for asynchronous processing.
+The app intentionally does very little: it is essentially middleware for [ExpressJS](https://expressjs.com) that accepts an incoming request, verifies its origin, and passes the request to a user-provided callback, where the payload is sent to a queue/trigger for asynchronous processing.
 
 Endpoints are provided for:
 
@@ -13,13 +11,9 @@ Endpoints are provided for:
 - `/oauth` completes the [OAuth2](https://api.slack.com/docs/oauth) workflow
 - `/slash/:cmd` publishes [slash commands](https://api.slack.com/slash-commands)
 
-Without additional configuration, request payloads are simply published to `console.log`.
-
 In production it is expected that users will attach their own publishing functions to connect to a messaging service like [Amazon SNS](https://aws.amazon.com/sns/), or [Google Pub/Sub](https://cloud.google.com/pubsub/docs/).
 
-The fetching of additional/secret environmental values necessary for connecting to external services is also configurable.
-
-**Advantages**
+## Advantages
 
 - Separates the concerns of responding to incoming requests and the logic to handle them.
   - Handlers can be added/removed independently of this app; deploy once and forget.
@@ -28,13 +22,30 @@ The fetching of additional/secret environmental values necessary for connecting 
 - Designed to work within serverless frameworks, such as [AWS Lambda](https://aws.amazon.com/lambda/) or [Google Cloud Functions](https://cloud.google.com/functions/docs/).
 - Authenticates requests using Slack's [signing secrets](https://api.slack.com/docs/verifying-requests-from-slack) so you'll know that events published to internal triggers/queues are verified.
 
-**Drawbacks**
+## Drawbacks
 
 - Slack has a strict 3-second lifetime for many API operations, so it is critical that your asynchronous tasks complete quickly. Cold start times of some serverless computing platforms may be prohibitively slow.
 
-## Usage
+## Serverless Deployment
 
-At its core, `slackend` is an [Express](https://expressjs.com) application with several routes defined for handling Slack events. None of the routes are configured to respond to the request. This is done deliberately so users can customize the behavior of the app.
+<img alt="AWS" src="./docs/aws.png" width=500 style="display: block; margin-left: auto; margin-right: auto; width: 80%;"/>
+<sub style="display: block; margin-left: auto; margin-right: auto; width: 80%; text-align: center;">Example AWS Architecture</sub>
+
+Deploying a version of this app to Amazon Web Services (AWS) serverless offerings might take the above shape, where incoming requests from Slack to your app are handled as follows:
+
+**API Gateway** receives and routes all requests using the catchall `/{proxy+}` resource and processed using a single **Lambda function** integration.
+
+The **Lambda function** starts a proxy express server to handle the request and the request is assigned to a specific **SNS topic** meant to handle that type of message.
+
+Each Slack message &mdash; an OAuth request, a workspace event, a user-initiated callback, or a custom slash command &mdash; is published to a topic specifically for that event and the API responds to Slack with a `204 - No Content` status code.
+
+If the topic does not exist, the API responds with a `400 - Bad Request` status code.
+
+Using this method, each feature of your app can be added one-by-one independently of the API and is highly scalable.
+
+## NodeJS Usage
+
+At its core, `slackend` is middleware for [ExpressJS](https://expressjs.com) with several routes predefined for handling Slack messages. None of the routes are configured to respond to the request. This is done deliberately so users can customize the behavior of the app.
 
 The Slack message and an inferred topic name are stored in the `res.locals` object and can be used to publish the request to your preferred messaging/queueing service.
 
@@ -60,9 +71,9 @@ app.use((req, res) => {
 });
 ```
 
-All of the configuration options to `slackend()` are optional, but omitting the `signing_secret` will disable the verification step where received requests are confirmed as originating from Slack. Disabling verification can also be done by setting the environmental variable `DISABLE_VERIFICATION=1`.
+*WARNING &mdash; All of the configuration options to `slackend()` are optional, but omitting the `signing_secret` will disable the verification step where received requests are confirmed as originating from Slack. Disabling verification can also be done by setting the environmental variable `DISABLE_VERIFICATION=1`.*
 
-## Local Setup
+## Local Development
 
 Run a local instance of your slack app by cloning this repository, configuring settings, installing dependencies, and starting the express server.
 
@@ -106,7 +117,7 @@ curl --request POST \
   --url 'http://localhost:3000/slash/fizz'
 ```
 
-## Deploy to AWS Lambda
+## Deploy with Terraform
 
 Deploy directly to AWS using [`terraform`](https://terraform.io) and the [`slackbot`](https://github.com/amancevice/terraform-aws-slackbot) + [`slackbot-secrets`](https://github.com/amancevice/terraform-aws-slackbot-secrets) modules:
 
