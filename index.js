@@ -64,32 +64,40 @@ function handleOauth(options = {}) {
   };
 }
 
-function handleCallback(req, res, next) {
-  res.locals.message = req.body = JSON.parse(qs.parse(req.body).payload);
-  res.locals.topic   = `callback_${res.locals.message.callback_id}`;
-  next();
-};
-
-function handleEvent(req, res, next) {
-  res.locals.message = req.body = JSON.parse(req.body);
-  if (res.locals.message.type === 'url_verification') {
-    res.json({challenge: res.locals.message.challenge});
-  } else {
-    res.locals.topic = `event_${res.locals.message.event.type}`;
+function handleCallback(options = {}) {
+  return (req, res, next) => {
+    res.locals.message = req.body = JSON.parse(qs.parse(req.body).payload);
+    res.locals.topic   = `${options.topic_prefix}callback_${res.locals.message.callback_id}${options.topic_suffix}`;
     next();
-  }
-};
+  };
+}
 
-function handleSlashCmd(req, res, next) {
-  res.locals.message = req.body = qs.parse(req.body);
-  res.locals.topic   = `slash_${req.params.cmd}`;
-  next();
-};
+function handleEvent(options = {}) {
+  return (req, res, next) => {
+    res.locals.message = req.body = JSON.parse(req.body);
+    if (res.locals.message.type === 'url_verification') {
+      res.json({challenge: res.locals.message.challenge});
+    } else {
+      res.locals.topic = `${options.topic_prefix}event_${res.locals.message.event.type}${options.topic_suffix}`;
+      next();
+    }
+  };
+}
+
+function handleSlashCmd(options = {}) {
+  return (req, res, next) => {
+    res.locals.message = req.body = qs.parse(req.body);
+    res.locals.topic   = `${options.topic_prefix}slash_${req.params.cmd}${options.topic_suffix}`;
+    next();
+  };
+}
 
 exports = module.exports = (options = {}) => {
 
   // Set defaults
   options.signing_version = options.signing_version || 'v0';
+  options.topic_prefix    = options.topic_prefix    || '';
+  options.topic_suffix    = options.topic_suffix    || '';
 
   // Create express router
   const app = express();
@@ -97,9 +105,9 @@ exports = module.exports = (options = {}) => {
   // Configure routes
   app.use(bodyParser.text({type: '*/*'}));
   app.get('/oauth', handleOauth(options));
-  app.post('/callbacks',  verifyRequest(options), handleCallback);
-  app.post('/events',     verifyRequest(options), handleEvent);
-  app.post('/slash/:cmd', verifyRequest(options), handleSlashCmd);
+  app.post('/callbacks',  verifyRequest(options), handleCallback(options));
+  app.post('/events',     verifyRequest(options), handleEvent(options));
+  app.post('/slash/:cmd', verifyRequest(options), handleSlashCmd(options));
 
   // Return routes
   return app;

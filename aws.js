@@ -10,7 +10,7 @@ slackend.logger.info.log  = console.log.bind(console);
 slackend.logger.warn.log  = console.log.bind(console);
 slackend.logger.error.log = console.log.bind(console);
 
-module.exports = (options = {}) => {
+exports = module.exports = (options = {}) => {
   let app            = options.app;
   let secretsmanager = options.secretsmanager || new SecretsManager();
   let server         = options.server;
@@ -28,6 +28,8 @@ module.exports = (options = {}) => {
         signing_secret:  process.env.SLACK_SIGNING_SECRET,
         signing_version: process.env.SLACK_SIGNING_VERSION,
         token:           process.env.SLACK_TOKEN,
+        topic_prefix:    process.env.AWS_SNS_PREFIX,
+        topic_suffix:    process.env.AWS_SNS_SUFFIX,
       }), publish);
     }
     return app;
@@ -70,7 +72,6 @@ module.exports = (options = {}) => {
   }
 
   function publish (req, res) {
-    res.locals.topic = `${process.env.AWS_SNS_PREFIX || ''}${res.locals.topic}`;
     slackend.logger.info(`PUT ${JSON.stringify(res.locals)}`);
     return sns.publish({
       Message:  JSON.stringify(res.locals.message),
@@ -93,3 +94,4 @@ module.exports = (options = {}) => {
     publish:       publish,
   }
 };
+exports.logger = slackend.logger;

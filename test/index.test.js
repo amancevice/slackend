@@ -8,8 +8,15 @@ const mockaccesserr = async (options) => { return Promise.reject('BOOM'); };
 const mockslack     = {oauth: {access: mockaccess}};
 const mockslackerr  = {oauth: {access: mockaccesserr}};
 
-const app = slackend({slack: mockslack}).use((req, res) => res.json(res.locals));
-const err = slackend({slack: mockslackerr, signing_secret: 'fake'}).use((req, res) => res.json(res.locals));
+const app = slackend({
+  slack:        mockslack,
+  topic_prefix: 'fizz_',
+  topic_suffix: '_buzz',
+}).use((req, res) => res.json(res.locals));
+const err = slackend({
+  slack:          mockslackerr,
+  signing_secret: 'fake',
+}).use((req, res) => res.json(res.locals));
 
 describe('API | GET /oauth', function() {
 
@@ -37,7 +44,7 @@ describe('API | POST /callbacks', function() {
   it('responds with message and topic', function(done) {
     let exp = {
       message: {callback_id: 'fizz'},
-      topic: 'callback_fizz',
+      topic:   'fizz_callback_fizz_buzz',
     };
     request(app)
       .post('/callbacks')
@@ -51,7 +58,7 @@ describe('API | POST /events', function() {
   it('responds with message and topic', function(done) {
     let exp = {
       message: {event: {type: 'team_join'}, type: 'event_callback'},
-      topic: 'event_team_join',
+      topic:   'fizz_event_team_join_buzz',
     };
     request(app)
       .post('/events')
@@ -73,7 +80,7 @@ describe('API | POST /slash/:cmd', function() {
   it('responds with message and topic', function(done) {
     let exp = {
       message: {fizz: 'buzz'},
-      topic: 'slash_fizz',
+      topic:   'fizz_slash_fizz_buzz',
     };
     request(app)
       .post('/slash/fizz')
@@ -105,7 +112,7 @@ describe('API | Verification', function() {
   it('Skips verification', function(done) {
     let exp = {
       message: {fizz: 'buzz'},
-      topic: 'slash_fizz',
+      topic:   'fizz_slash_fizz_buzz',
     };
     process.env.DISABLE_VERIFICATION = '1';
     request(app)
@@ -126,7 +133,7 @@ describe('API | Verification', function() {
     let sig  = `v0=${hmac.update(data).digest('hex')}`;
     let exp  = {
       message: {callback_id: 'fizz'},
-      topic: 'callback_fizz',
+      topic:   'callback_fizz',
     };
     request(err)
       .post('/callbacks')
