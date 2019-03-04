@@ -23,7 +23,7 @@ describe('API | GET /oauth', function() {
   it('Completes the OAuth workflow', function(done) {
     let exp = {
       message: {token: 'fizz'},
-      topic: 'oauth',
+      topic: 'fizz_oauth_buzz',
     };
     request(app)
       .get('/oauth')

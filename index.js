@@ -55,7 +55,7 @@ function handleOauth(options = {}) {
       redirect_uri:  options.redirect_uri,
     }).then((ret) => {
       res.locals.message = ret;
-      res.locals.topic   = `oauth`;
+      res.locals.topic   = `${options.topic_prefix}oauth${options.topic_suffix}`;
       next();
     }).catch((err) => {
       logger.error(err);
