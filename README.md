@@ -28,8 +28,7 @@ In production it is expected that users will attach their own publishing functio
 
 ## Serverless Deployment
 
-<img alt="AWS" src="./docs/aws.png" width=500 style="display: block; margin-left: auto; margin-right: auto; width: 80%;"/>
-<sub style="display: block; margin-left: auto; margin-right: auto; width: 80%; text-align: center;">Example AWS Architecture</sub>
+<img alt="AWS" src="./docs/aws.png" width=640/>
 
 Deploying a version of this app to Amazon Web Services (AWS) serverless offerings might take the above shape, where incoming requests from Slack to your app are handled as follows:
 
