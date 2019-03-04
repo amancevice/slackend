@@ -42,6 +42,27 @@ If the topic does not exist, the API responds with a `400 - Bad Request` status 
 
 Using this method, each feature of your app can be added one-by-one independently of the API and is highly scalable.
 
+## Topic Formula
+
+The general idea is to map families of Slack requests to specific pub/sub topics that can be processed asynchronously. How a Slack request is mapped to a given topic is not complicated, but requires some explaining.
+
+In general the formula for assembling a topic is:
+
+```
+[ optional prefix ]( deterministic topic name )[ optional suffix ]
+```
+
+First, the topic formula can be configured to have a prefix/suffix. This is useful when the publishing mechanism is something like Amazon SNS, where the topic needs to be a fully-qualified ARN. In that case you might specify that your topics will all begin with `arn:aws:sns:us-east-1:123456789012:slack_`.
+
+Next, the deterministic topic name is determined from the request. The name starts with the endpoint being called and an additional identifier is extracted from the body or path of request. The following table illustrates how the topic name is determined
+
+| Endpoint      | Identifier Path | Topic Name              | Example Scenario                                  |
+|:------------- |:--------------- |:----------------------- |:------------------------------------------------- |
+| `/callbacks`  | `$.callback_id` | `callback_fizzbuzz_123` | Interactive message w/ callback ID `fizzbuzz_123` |
+| `/events`     | `$.event.type`  | `event_team_join`       | New member joins workspace                        |
+| `/oauth`      | N/A             | `oauth`                 | Member initiates OAuth workflow                   |
+| `/slash/:cmd` | `:cmd` in path  | `slash_fizz`            | Member posts `/fizz` to workspace                 |
+
 ## NodeJS Usage
 
 At its core, `slackend` is middleware for [ExpressJS](https://expressjs.com) with several routes predefined for handling Slack messages. None of the routes are configured to respond to the request. This is done deliberately so users can customize the behavior of the app.
@@ -61,6 +82,8 @@ const app = slackend({
   signing_secret:  process.env.SLACK_SIGNING_SECRET,
   signing_version: process.env.SLACK_SIGNING_VERSION,
   token:           process.env.SLACK_TOKEN,
+  topic_prefix:    '<optional-topic-prefix>',
+  topic_suffix:    '<optional-topic-suffix>',
 });
 
 // You *must* add a callback that responds to the request
