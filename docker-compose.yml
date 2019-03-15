@@ -4,4 +4,4 @@ services:
     entrypoint: npm
     image: lambci/lambda:build-nodejs8.10
     volumes:
-    - ./:/var/task
+      - ./:/var/task
