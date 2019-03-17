@@ -10,6 +10,8 @@
   },
   "description": "Simple asynchronous back end for Slack apps",
   "devDependencies": {
+    "aws-sdk": "^2.330.0",
+    "aws-serverless-express": "^3.3.5",
     "dotenv": "^6.2.0",
     "mocha": "^5.2.0",
     "nyc": "^13.3.0",
@@ -25,16 +27,11 @@
   "license": "MIT",
   "main": "index.js",
   "name": "slackend",
-  "optionalDependencies": {
-    "aws-sdk": "^2.330.0",
-    "aws-serverless-express": "^3.3.5"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/amancevice/slackend.git"
   },
   "scripts": {
-    "build": "docker-compose run npm install && docker-compose down",
     "test": "nyc mocha"
   },
   "version": "1.3.1"
