@@ -139,6 +139,17 @@ curl --request POST \
   --url 'http://localhost:3000/slash/fizz'
 ```
 
+## AWS
+
+A module is provided to deploy to Lambda using SecretsManager to store the Slack secrets.
+
+Example Lambda handler:
+
+```javascript
+const slackend = require('slackend/aws');
+module.exports = slackend();
+```
+
 ## Deploy with Terraform
 
 Deploy directly to AWS using [`terraform`](https://terraform.io) and the [`slackbot`](https://github.com/amancevice/terraform-aws-slackbot) + [`slackbot-secrets`](https://github.com/amancevice/terraform-aws-slackbot-secrets) modules:
