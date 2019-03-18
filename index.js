@@ -104,6 +104,7 @@ exports = module.exports = (options = {}) => {
 
   // Configure routes
   app.use(bodyParser.text({type: '*/*'}));
+  app.get('/health', (req, res) => res.json({ok: true}));
   app.get('/oauth', handleOauth(options));
   app.post('/callbacks',  verifyRequest(options), handleCallback(options));
   app.post('/events',     verifyRequest(options), handleEvent(options));

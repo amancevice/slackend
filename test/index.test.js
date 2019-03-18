@@ -18,6 +18,14 @@ const err = slackend({
   signing_secret: 'fake',
 }).use((req, res) => res.json(res.locals));
 
+describe('API | GET /health', function() {
+  it('Responds OK', function(done) {
+    request(app)
+      .get('/health')
+      .expect(200, {ok: true}, done);
+  });
+})
+
 describe('API | GET /oauth', function() {
 
   it('Completes the OAuth workflow', function(done) {
