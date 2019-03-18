@@ -67,7 +67,7 @@ exports = module.exports = (options = {}) => {
       await getSlack();
       const func = slack.chat[method];
       const msgs = event.Records.map((rec) => JSON.parse(rec.Sns.Message));
-      return await Promise.all(msgs.map(func));
+      return await Promise.all(msgs.map((msg) => func(msg)));
     };
   }
 
