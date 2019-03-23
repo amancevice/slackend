@@ -76,14 +76,16 @@ const slackend = require('slackend');
 
 // Create express app
 const app = slackend({
-  client_id:       process.env.SLACK_CLIENT_ID,
-  client_secret:   process.env.SLACK_CLIENT_SECRET,
-  redirect_uri:    process.env.SLACK_OAUTH_REDIRECT_URI,
-  signing_secret:  process.env.SLACK_SIGNING_SECRET,
-  signing_version: process.env.SLACK_SIGNING_VERSION,
-  token:           process.env.SLACK_TOKEN,
-  topic_prefix:    '<optional-topic-prefix>',
-  topic_suffix:    '<optional-topic-suffix>',
+  client_id:          process.env.SLACK_CLIENT_ID,
+  client_secret:      process.env.SLACK_CLIENT_SECRET,
+  oauth_error_uri:    process.env.SLACK_OAUTH_ERROR_URI,
+  oauth_redirect_uri: process.env.SLACK_OAUTH_REDIRECT_URI,
+  oauth_success_uri:  process.env.SLACK_OAUTH_SUCCESS_URI,
+  signing_secret:     process.env.SLACK_SIGNING_SECRET,
+  signing_version:    process.env.SLACK_SIGNING_VERSION,
+  token:              process.env.SLACK_TOKEN,
+  topic_prefix:       '<optional-topic-prefix>',
+  topic_suffix:       '<optional-topic-suffix>',
 });
 
 // You *must* add a callback that responds to the request

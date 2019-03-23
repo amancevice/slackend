@@ -46,10 +46,31 @@ describe('API | GET /oauth', function() {
       .set('Accept', 'application/json')
       .expect(500, exp, done);
   });
+
+  it('Handles access_denied with JSON', function(done) {
+    let exp = {error: 'access_denied'};
+    request(app)
+      .get('/oauth?error=access_denied')
+      .set('Accept', 'application/json')
+      .expect(403, exp, done);
+  });
+
+  it('Handles access_denied with a redirect', function(done) {
+    let redir = slackend({
+      slack:            mockslack,
+      oauth_error_uri: 'https://example.com',
+      topic_prefix:    'fizz_',
+      topic_suffix:    '_buzz',
+    }).use((req, res) => res.json(res.locals));
+    request(redir)
+      .get('/oauth?error=access_denied')
+      .set('Accept', 'application/json')
+      .expect(302, {}, done);
+  });
 });
 
 describe('API | POST /callbacks', function() {
-  it('responds with message and topic', function(done) {
+  it('Responds with message and topic', function(done) {
     let exp = {
       message: {callback_id: 'fizz'},
       topic:   'fizz_callback_fizz_buzz',
@@ -63,7 +84,7 @@ describe('API | POST /callbacks', function() {
 });
 
 describe('API | POST /events', function() {
-  it('responds with message and topic', function(done) {
+  it('Responds with message and topic', function(done) {
     let exp = {
       message: {event: {type: 'team_join'}, type: 'event_callback'},
       topic:   'fizz_event_team_join_buzz',
@@ -75,7 +96,7 @@ describe('API | POST /events', function() {
       .expect(200, exp, done);
   });
 
-  it('responds with challenge', function(done) {
+  it('Responds with challenge', function(done) {
     request(app)
       .post('/events')
       .send({type: 'url_verification', challenge: 'fizzbuzz'})
@@ -85,7 +106,7 @@ describe('API | POST /events', function() {
 });
 
 describe('API | POST /slash/:cmd', function() {
-  it('responds with message and topic', function(done) {
+  it('Responds with message and topic', function(done) {
     let exp = {
       message: {fizz: 'buzz'},
       topic:   'fizz_slash_fizz_buzz',

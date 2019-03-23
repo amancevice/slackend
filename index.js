@@ -47,21 +47,29 @@ function verifyRequest(options = {}) {
 
 function handleOauth(options = {}) {
   return (req, res, next) => {
-    const slack = options.slack || new WebClient(options.token);
-    slack.oauth.access({
-      code:          req.query.code,
-      client_id:     options.client_id,
-      client_secret: options.client_secret,
-      redirect_uri:  options.redirect_uri,
-    }).then((ret) => {
-      res.locals.message = ret;
-      res.locals.topic   = `${options.topic_prefix}oauth${options.topic_suffix}`;
-      next();
-    }).catch((err) => {
-      logger.error(err);
-      res.status(500).json({error: err});
-    });
-  };
+    if (req.query.error && req.query.error === 'access_denied') {
+      if (options.oauth_error_uri) {
+        res.redirect(options.oauth_error_uri);
+      } else {
+        res.status(403).json(req.query);
+      }
+    } else {
+      const slack = options.slack || new WebClient(options.token);
+      slack.oauth.access({
+        code:          req.query.code,
+        client_id:     options.client_id,
+        client_secret: options.client_secret,
+        redirect_uri:  options.redirect_uri,
+      }).then((ret) => {
+        res.locals.message = ret;
+        res.locals.topic   = `${options.topic_prefix}oauth${options.topic_suffix}`;
+        next();
+      }).catch((err) => {
+        logger.error(err);
+        res.status(500).json({error: err});
+      });
+    };
+  }
 }
 
 function handleCallback(options = {}) {

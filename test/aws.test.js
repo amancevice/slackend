@@ -133,6 +133,16 @@ describe('AWS | publish', function() {
       .set('Accept', 'application/json')
       .expect(400, done);
   });
+
+  it('OAuth redirects to Slack', function(done) {
+    lambda = slackend({sns: mockSns});
+    app = express();
+    app.use(mockRoute, lambda.publish);
+    request(app)
+      .get('/oauth')
+      .set('Accept', 'application/json')
+      .expect(302, done);
+  })
 })
 
 describe('AWS | Handler', function() {
