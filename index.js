@@ -53,7 +53,7 @@ function handleOauth(options = {}) {
       } else {
         res.status(403).json(req.query);
       }
-    } else {
+    } else if (req.query.code) {
       const slack = options.slack || new WebClient(options.token);
       slack.oauth.access({
         code:          req.query.code,
@@ -68,6 +68,8 @@ function handleOauth(options = {}) {
         logger.error(err);
         res.status(500).json({error: err});
       });
+    } else {
+      res.redirect(`https://slack.com/oauth/authorize?client_id=${options.client_id}&scope=incoming-webhook`);
     };
   }
 }

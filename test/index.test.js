@@ -34,15 +34,22 @@ describe('API | GET /oauth', function() {
       topic: 'fizz_oauth_buzz',
     };
     request(app)
-      .get('/oauth')
+      .get('/oauth?code=buzz')
       .set('Accept', 'application/json')
       .expect(200, exp, done);
+  });
+
+  it('Redirects to begin the OAuth workflow', function(done) {
+    request(err)
+      .get('/oauth')
+      .set('Accept', 'application/json')
+      .expect(302, done);
   });
 
   it('Rejects the OAuth workflow', function(done) {
     let exp = {error: 'BOOM'};
     request(err)
-      .get('/oauth')
+      .get('/oauth?code=buzz')
       .set('Accept', 'application/json')
       .expect(500, exp, done);
   });
