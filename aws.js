@@ -4,7 +4,7 @@ const express              = require('express');
 const slackend             = require('./index');
 const url                  = require('url');
 const {SecretsManager,SNS} = require('aws-sdk');
-const {WebClient}          = require('@slack/client');
+const {WebClient}          = require('@slack/web-api');
 
 slackend.logger.debug.log = console.log.bind(console);
 slackend.logger.info.log  = console.log.bind(console);

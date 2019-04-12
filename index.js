@@ -4,7 +4,7 @@ const debug       = require('debug');
 const crypto      = require('crypto');
 const express     = require('express');
 const qs          = require('querystring');
-const {WebClient} = require('@slack/client');
+const {WebClient} = require('@slack/web-api');
 
 const logger = {
   debug: debug('slackend:debug'),
