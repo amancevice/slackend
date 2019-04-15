@@ -3,24 +3,26 @@ const express  = require('express');
 const request  = require('supertest');
 const slackend = require('../index');
 
-const mockaccess    = async (options) => { return {token: 'fizz'}; };
-const mockaccesserr = async (options) => { return Promise.reject('BOOM'); };
-const mockslack     = {oauth: {access: mockaccess}};
-const mockslackerr  = {oauth: {access: mockaccesserr}};
+const mockslack     = {oauth: {access: async (options) => { return {token: 'fizz'}; }}};
+const mockslackerr  = {oauth: {access: async (options) => { return Promise.reject('BOOM'); }}};
 
-const app = slackend({
-  slack:        mockslack,
-  topic_prefix: 'fizz_',
-  topic_suffix: '_buzz',
-}).use((req, res) => res.json(res.locals));
-const err = slackend({
-  slack:          mockslackerr,
-  signing_secret: 'fake',
-}).use((req, res) => res.json(res.locals));
+const app = (options = {}) => {
+  return slackend(Object.assign({
+    slack:        mockslack,
+    topic_prefix: 'fizz_',
+    topic_suffix: '_buzz',
+  }, options)).use((req, res) => res.json(res.locals));
+};
+const err = (options = {}) => {
+  return slackend(Object.assign({
+    slack:          mockslackerr,
+    signing_secret: 'fake',
+  }, options)).use((req, res) => res.json(res.locals));
+};
 
 describe('API | GET /health', function() {
   it('Responds OK', function(done) {
-    request(app)
+    request(app())
       .get('/health')
       .expect(200, {ok: true}, done);
   });
@@ -33,46 +35,24 @@ describe('API | GET /oauth', function() {
       message: {token: 'fizz'},
       topic: 'fizz_oauth_buzz',
     };
-    request(app)
+    request(app())
       .get('/oauth?code=buzz')
       .set('Accept', 'application/json')
       .expect(200, exp, done);
   });
 
-  it('Redirects to begin the OAuth workflow', function(done) {
-    request(err)
+  it('Redirects to the OAuth error URI', function(done) {
+    request(err({oauth_error_uri: 'https://example.com/error.html'}))
       .get('/oauth')
       .set('Accept', 'application/json')
-      .expect(302, done);
+      .expect('Location', 'https://example.com/error.html', done);
   });
 
   it('Rejects the OAuth workflow', function(done) {
-    let exp = {error: 'BOOM'};
-    request(err)
+    request(err())
       .get('/oauth?code=buzz')
       .set('Accept', 'application/json')
-      .expect(500, exp, done);
-  });
-
-  it('Handles access_denied with JSON', function(done) {
-    let exp = {error: 'access_denied'};
-    request(app)
-      .get('/oauth?error=access_denied')
-      .set('Accept', 'application/json')
-      .expect(403, exp, done);
-  });
-
-  it('Handles access_denied with a redirect', function(done) {
-    let redir = slackend({
-      slack:            mockslack,
-      oauth_error_uri: 'https://example.com',
-      topic_prefix:    'fizz_',
-      topic_suffix:    '_buzz',
-    }).use((req, res) => res.json(res.locals));
-    request(redir)
-      .get('/oauth?error=access_denied')
-      .set('Accept', 'application/json')
-      .expect(302, {}, done);
+      .expect(403, done);
   });
 });
 
@@ -82,7 +62,7 @@ describe('API | POST /callbacks', function() {
       message: {callback_id: 'fizz'},
       topic:   'fizz_callback_fizz_buzz',
     };
-    request(app)
+    request(app())
       .post('/callbacks')
       .send('payload=%7B%22callback_id%22%3A%22fizz%22%7D')
       .set('Accept', 'application/json')
@@ -96,7 +76,7 @@ describe('API | POST /events', function() {
       message: {event: {type: 'team_join'}, type: 'event_callback'},
       topic:   'fizz_event_team_join_buzz',
     };
-    request(app)
+    request(app())
       .post('/events')
       .send({type: 'event_callback', event: {type: 'team_join'}})
       .set('Accept', 'application/json')
@@ -104,7 +84,7 @@ describe('API | POST /events', function() {
   });
 
   it('Responds with challenge', function(done) {
-    request(app)
+    request(app())
       .post('/events')
       .send({type: 'url_verification', challenge: 'fizzbuzz'})
       .set('Accept', 'application/json')
@@ -118,7 +98,7 @@ describe('API | POST /slash/:cmd', function() {
       message: {fizz: 'buzz'},
       topic:   'fizz_slash_fizz_buzz',
     };
-    request(app)
+    request(app())
       .post('/slash/fizz')
       .send('fizz=buzz')
       .set('Accept', 'application/json')
@@ -128,7 +108,7 @@ describe('API | POST /slash/:cmd', function() {
 
 describe('API | Verification', function() {
   it('Errors with bad signature', function(done) {
-    request(err)
+    request(err())
       .post('/callbacks')
       .send('payload=%7B%22callback_id%22%3A%22fizz%22%7D')
       .set('Accept', 'application/json')
@@ -136,7 +116,7 @@ describe('API | Verification', function() {
   });
 
   it('Errors with bad timestamp', function(done) {
-    request(err)
+    request(err())
       .post('/callbacks')
       .send('payload=%7B%22callback_id%22%3A%22fizz%22%7D')
       .set('Accept', 'application/json')
@@ -151,7 +131,7 @@ describe('API | Verification', function() {
       topic:   'fizz_slash_fizz_buzz',
     };
     process.env.DISABLE_VERIFICATION = '1';
-    request(app)
+    request(app())
       .post('/slash/fizz')
       .send('fizz=buzz')
       .set('Accept', 'application/json')
@@ -171,7 +151,7 @@ describe('API | Verification', function() {
       message: {callback_id: 'fizz'},
       topic:   'callback_fizz',
     };
-    request(err)
+    request(err())
       .post('/callbacks')
       .send('payload=%7B%22callback_id%22%3A%22fizz%22%7D')
       .set('Accept', 'application/json')
