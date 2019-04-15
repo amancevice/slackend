@@ -10,6 +10,7 @@ const MOCK_SECRET = {
   SLACK_CLIENT_ID:               '123456789012.123456789012',
   SLACK_CLIENT_SECRET:           '1234567890abcdef1234567890abcdef',
   SLACK_OAUTH_REDIRECT_URI:      'http://localhost:3000/oauth/callback',
+  SLACK_OAUTH_SUCCESS_URI:       'slack://channel?team={TEAM_ID}&id={CHANNEL_ID}',
   //SLACK_SIGNING_SECRET:          '1234567890abcdef1234567890abcdef',
   SLACK_SIGNING_VERSION:         'v0',
   SLACK_TOKEN:                   'xoxb-123456789012-abcdefghijklmnopqrstuvwx',
@@ -18,7 +19,13 @@ const MOCK_SECRET = {
 
 const mockRoute = (req, res, next) => {
   res.locals.topic   = 'slack_test_topic';
-  res.locals.message = {ok: true};
+  res.locals.message = {
+    ok:               true,
+    team_id:          'T12345678',
+    incoming_webhook: {
+      channel_id: 'C12345678',
+    }
+  };
   next();
 };
 
@@ -141,7 +148,7 @@ describe('AWS | publish', function() {
     request(app)
       .get('/oauth')
       .set('Accept', 'application/json')
-      .expect(302, done);
+      .expect('Location', 'slack://channel?team=T12345678&id=C12345678', done);
   })
 })
 

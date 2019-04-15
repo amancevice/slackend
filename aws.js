@@ -81,11 +81,10 @@ exports = module.exports = (options = {}) => {
       TopicArn: res.locals.topic,
     }).promise().then(() => {
       if (req.path === '/oauth') {
-        var uri = url.parse(process.env.SLACK_OAUTH_SUCCESS_URI || 'slack://open', true);
-        if (uri.protocol === 'slack:') {
-          uri.query.team = res.locals.message.team_id;
-          uri.query.id = res.locals.message.incoming_webhook && res.locals.message.incoming_webhook.channel_id;
-        }
+        let uri = process.env.SLACK_OAUTH_SUCCESS_URI || 'slack://channel?team={TEAM_ID}&id={CHANNEL_ID}';
+        uri = uri.replace('{TEAM_ID}', res.locals.message.team_id);
+        uri = uri.replace('{CHANNEL_ID}', res.locals.message.incoming_webhook && res.locals.message.incoming_webhook.channel_id);
+        uri = url.parse(uri, true);
         res.redirect(uri.format());
       } else {
         res.status(204).send();
