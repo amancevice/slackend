@@ -1,16 +1,24 @@
 language: node_js
-node_js:
-- "8"
-- "10"
-install:
-- npm install
+env:
+- RUNTIME=nodejs8.10
+- RUNTIME=nodejs10.x
 script:
-- npm test
+- make runtime=${RUNTIME}
 deploy:
   provider: npm
   email: alexander.mancevice@gmail.com
   api_key:
-    secure: EFmWRfro5HBNccoZ4zuYPG70OXqqXKsp8WGNkpDjW2IGSQIWqfGwhDka+iOfSUAyAoLp5uTr/6HEkmm2Li2MReGHKfSfpe6+xUUUb1rPwq4p9LTlup/Sm0bztxG0tym1GMjkeGzYdPP7J1WfPMR6y97AYiDSO0vdRfMQqKXy6YRWRmJp2wqpQapNbDr7DjO74lY0NyvXkP4+Qw+wARsfEU74WWIWg4jfjIeMFugmiNQrlStJQ9S+eP1t786AoRkq4onPhIAZsh3rOEdEbWzBDHJDMDPFg6x3n1lv3F/vJuS7pRTIu2vutF2CDAFIyjR7BS2XgrDWQZ+madNZeslQiQ3ZrlrKC7XH6aJYtpmD5TdmkOZzqtQcajNYpAHb/CnW+dhgQ/Lfkeq4PTJSlcgigCCQkxD57P75AGlWWgfXGcha0IUbm37Jv//yHpgn2snMVoM4e9dV+oY1X0yYeo6QfRVpuK09a62D5Ua09HSpIXO+CRW/n0pK+rfBsZtpaB0tgUuflrMeJNS9wVIXkh5i/3VGyRJdgghDZG3vjr+z02R98uOckl5Ph6FRhizkK6Rmaav64PFeY+S/3wFgloV5x5a+KW3IjmBKVVwRC5NKnV0r7QO7wswPv4QGd2fL83qYp4krd5GNdUA+4S8r/GRywp2Wkm5IDJrspNvPs4bD230=
+    secure: >-
+      EFmWRfro5HBNccoZ4zuYPG70OXqqXKsp8WGNkpDjW2IGSQIWqfGwhDka+iOfSUAyAoLp5uTr/
+      6HEkmm2Li2MReGHKfSfpe6+xUUUb1rPwq4p9LTlup/Sm0bztxG0tym1GMjkeGzYdPP7J1WfPM
+      R6y97AYiDSO0vdRfMQqKXy6YRWRmJp2wqpQapNbDr7DjO74lY0NyvXkP4+Qw+wARsfEU74WWI
+      Wg4jfjIeMFugmiNQrlStJQ9S+eP1t786AoRkq4onPhIAZsh3rOEdEbWzBDHJDMDPFg6x3n1lv
+      3F/vJuS7pRTIu2vutF2CDAFIyjR7BS2XgrDWQZ+madNZeslQiQ3ZrlrKC7XH6aJYtpmD5Tdmk
+      OZzqtQcajNYpAHb/CnW+dhgQ/Lfkeq4PTJSlcgigCCQkxD57P75AGlWWgfXGcha0IUbm37Jv/
+      /yHpgn2snMVoM4e9dV+oY1X0yYeo6QfRVpuK09a62D5Ua09HSpIXO+CRW/n0pK+rfBsZtpaB0
+      tgUuflrMeJNS9wVIXkh5i/3VGyRJdgghDZG3vjr+z02R98uOckl5Ph6FRhizkK6Rmaav64PFe
+      Y+S/3wFgloV5x5a+KW3IjmBKVVwRC5NKnV0r7QO7wswPv4QGd2fL83qYp4krd5GNdUA+4S8r/
+      GRywp2Wkm5IDJrspNvPs4bD230=
   on:
     tags: true
     repo: amancevice/slackend

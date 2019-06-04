@@ -1,3 +1,5 @@
+.docker/
+.nyc_output/
 docs/
 test/
 .env.example
