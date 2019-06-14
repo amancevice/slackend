@@ -2,27 +2,24 @@ runtime   := nodejs10.x
 name      := $(shell node -p "require('./package.json').name")
 version   := $(shell node -p "require('./package.json').version")
 build     := $(shell git describe --tags --always)
-buildfile := .docker/$(build)
-distfile  := $(name)-$(version).tgz
-digest     = $(shell cat $(buildfile))
+digest     = $(shell cat .docker/$(build))
 
-$(distfile): | package-lock.json
-	docker run --rm $(digest) cat $@ > $@
+.PHONY: all clean
 
-package-lock.json: $(buildfile)
-	docker run --rm $(digest) cat $@ > $@
+all: package-lock.json $(name)-$(version).tgz
 
-$(buildfile): | .docker
+.docker:
+	mkdir -p $@
+
+.docker/$(build): | .docker
 	docker build \
 	--build-arg RUNTIME=$(runtime) \
 	--iidfile $@ \
 	--tag $(name):$(build) .
 
-.docker:
-	mkdir -p $@
-
-.PHONY: clean
+package-lock.json $(name)-$(version).tgz: .docker/$(build)
+	docker run --rm -w /var/task $(digest) cat $@ > $@
 
 clean:
-	docker image rm -f $(name) $(shell sed G .docker/*)
+	docker image rm -f $(name) $(shell awk {print} .docker/*)
 	rm -rf .docker *.tgz package-lock.json

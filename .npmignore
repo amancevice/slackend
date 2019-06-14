@@ -1,6 +1,8 @@
-.docker/
-.nyc_output/
-docs/
-test/
-.env.example
-docker-compose.yml
+*
+!LICENSE*
+!README*
+!aws.js
+!google.js
+!index.js
+!package.json
+!server.js
