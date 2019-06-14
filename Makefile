@@ -21,5 +21,5 @@ package-lock.json $(name)-$(version).tgz: .docker/$(build)
 	docker run --rm -w /var/task $(digest) cat $@ > $@
 
 clean:
-	docker image rm -f $(name) $(shell awk {print} .docker/*)
-	rm -rf .docker *.tgz package-lock.json
+	-docker image rm -f $(name) $(shell awk {print} .docker/*)
+	-rm -rf .docker *.tgz package-lock.json
