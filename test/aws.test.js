@@ -1,6 +1,3 @@
-process.env.NODE_ENV = 'test';
-process.env.AWS_SNS_PREFIX = 'arn:aws:sns:us-east-1:123456789012:slack_mybot_'
-
 const assert   = require('assert');
 const express  = require('express');
 const request  = require('supertest');

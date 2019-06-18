@@ -34,34 +34,30 @@ Deploying a version of this app to Amazon Web Services (AWS) serverless offering
 
 **API Gateway** receives and routes all requests using the catchall `/{proxy+}` resource and processed using a single **Lambda function** integration.
 
-On cold starts, the **Lambda function** pulls its Slack tokens/secrets from its encrypted **SecretsManager** secret, starts a proxy express server, and publishes the request JSON to a specific **SNS topic** meant to handle that type of message. On warm starts the environment and server are cached and the request payload is published without needing to re-fetch the app secrets.
+On cold starts, the **Lambda function** pulls its Slack tokens/secrets from its encrypted **SecretsManager** secret, starts a proxy express server, and publishes the request to an **SNS topic** where it is sorted and subscribers are notified.
 
-Each Slack message &mdash; an OAuth request, a workspace event, a user-initiated callback, or a custom slash command &mdash; is published to a topic specifically for that event and the API responds to Slack with a `204 - No Content` status code.
+On warm starts the environment and server are cached and the request is published to **SNS** without needing to re-fetch the app secrets.
+
+Once the request &mdash; an OAuth request, a workspace event, a user-initiated callback, or a custom slash command &mdash; is published, the API responds to Slack with a `204 - No Content` status code.
 
 If the topic does not exist, the API responds with a `400 - Bad Request` status code.
 
 Using this method, each feature of your app can be added one-by-one independently of the API and is highly scalable.
 
-## Topic Formula
+## Topic Sorting
 
-The general idea is to map families of Slack requests to specific pub/sub topics that can be processed asynchronously. How a Slack request is mapped to a given topic is not complicated, but requires some explaining.
+Requests from Slack are converted to JSON and assigned an `id` and `type` depending on the type and contents of the request. The general idea is to infer some kind of routing logic from the request.
 
-In general the formula for assembling a topic is:
+The `type` field's value is taken from the path of the original request and will be one of `callback`, `event`, `oauth`, or `slash`.
 
-```
-[ optional prefix ]( deterministic topic name )[ optional suffix ]
-```
+The following table illustrates how the `type` and `id` field's respective values are calculated:
 
-First, the topic formula can be configured to have a prefix/suffix. This is useful when the publishing mechanism is something like Amazon SNS, where the topic needs to be a fully-qualified ARN. In that case you might specify that your topics will all begin with `arn:aws:sns:us-east-1:123456789012:slack_`.
-
-Next, the deterministic topic name is determined from the request. The name starts with the endpoint being called and an additional identifier is extracted from the body or path of request. The following table illustrates how the topic name is determined
-
-| Endpoint      | Identifier Path | Topic Name              | Example Scenario                                  |
-|:------------- |:--------------- |:----------------------- |:------------------------------------------------- |
-| `/callbacks`  | `$.callback_id` | `callback_fizzbuzz_123` | Interactive message w/ callback ID `fizzbuzz_123` |
-| `/events`     | `$.event.type`  | `event_team_join`       | New member joins workspace                        |
-| `/oauth`      | N/A             | `oauth`                 | Member initiates OAuth workflow                   |
-| `/slash/:cmd` | `:cmd` in path  | `slash_fizz`            | Member posts `/fizz` to workspace                 |
+| Endpoint      | Type       | ID Recipe       |
+|:------------- |:---------- |:--------------- |
+| `/callbacks`  | `callback` | `$.callback_id` |
+| `/events`     | `event`    | `$.event.type`  |
+| `/oauth`      | `oauth`    | `null`          |
+| `/slash/:cmd` | `slash`    | `:cmd`          |
 
 ## NodeJS Usage
 
@@ -84,8 +80,6 @@ const app = slackend({
   signing_secret:     process.env.SLACK_SIGNING_SECRET,
   signing_version:    process.env.SLACK_SIGNING_VERSION,
   token:              process.env.SLACK_TOKEN,
-  topic_prefix:       '<optional-topic-prefix>',
-  topic_suffix:       '<optional-topic-suffix>',
 });
 
 // You *must* add a callback that responds to the request

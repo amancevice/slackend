@@ -54,8 +54,8 @@ function handleOauth(options = {}) {
       client_secret: options.client_secret,
       redirect_uri:  options.redirect_uri,
     }).then((ret) => {
+      res.locals.type    = 'oauth';
       res.locals.message = ret;
-      res.locals.topic   = `${options.topic_prefix}oauth${options.topic_suffix}`;
       next();
     }).catch((err) => {
       logger.error(err);
@@ -70,19 +70,21 @@ function handleOauth(options = {}) {
 
 function handleCallback(options = {}) {
   return (req, res, next) => {
+    res.locals.type    = 'callback';
     res.locals.message = req.body = JSON.parse(qs.parse(req.body).payload);
-    res.locals.topic   = `${options.topic_prefix}callback_${res.locals.message.callback_id}${options.topic_suffix}`;
+    res.locals.id      = req.body.callback_id;
     next();
   };
 }
 
 function handleEvent(options = {}) {
   return (req, res, next) => {
+    res.locals.type    = 'event';
     res.locals.message = req.body = JSON.parse(req.body);
-    if (res.locals.message.type === 'url_verification') {
-      res.json({challenge: res.locals.message.challenge});
+    if (req.body.type === 'url_verification') {
+      res.json({challenge: req.body.challenge});
     } else {
-      res.locals.topic = `${options.topic_prefix}event_${res.locals.message.event.type}${options.topic_suffix}`;
+      res.locals.id = req.body.event.type;
       next();
     }
   };
@@ -90,8 +92,9 @@ function handleEvent(options = {}) {
 
 function handleSlashCmd(options = {}) {
   return (req, res, next) => {
+    res.locals.type    = 'slash'
     res.locals.message = req.body = qs.parse(req.body);
-    res.locals.topic   = `${options.topic_prefix}slash_${req.params.cmd}${options.topic_suffix}`;
+    res.locals.id      = req.params.cmd;
     next();
   };
 }
@@ -100,8 +103,6 @@ exports = module.exports = (options = {}) => {
 
   // Set defaults
   options.signing_version = options.signing_version || 'v0';
-  options.topic_prefix    = options.topic_prefix    || '';
-  options.topic_suffix    = options.topic_suffix    || '';
 
   // Create express router
   const app = express();

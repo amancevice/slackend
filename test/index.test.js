@@ -8,9 +8,7 @@ const mockslackerr  = {oauth: {access: async (options) => { return Promise.rejec
 
 const app = (options = {}) => {
   return slackend(Object.assign({
-    slack:        mockslack,
-    topic_prefix: 'fizz_',
-    topic_suffix: '_buzz',
+    slack: mockslack,
   }, options)).use((req, res) => res.json(res.locals));
 };
 const err = (options = {}) => {
@@ -33,7 +31,7 @@ describe('API | GET /oauth', function() {
   it('Completes the OAuth workflow', function(done) {
     let exp = {
       message: {token: 'fizz'},
-      topic: 'fizz_oauth_buzz',
+      type:    'oauth',
     };
     request(app())
       .get('/oauth?code=buzz')
@@ -59,8 +57,9 @@ describe('API | GET /oauth', function() {
 describe('API | POST /callbacks', function() {
   it('Responds with message and topic', function(done) {
     let exp = {
+      id:      'fizz',
       message: {callback_id: 'fizz'},
-      topic:   'fizz_callback_fizz_buzz',
+      type:    'callback',
     };
     request(app())
       .post('/callbacks')
@@ -73,8 +72,9 @@ describe('API | POST /callbacks', function() {
 describe('API | POST /events', function() {
   it('Responds with message and topic', function(done) {
     let exp = {
+      id:      'team_join',
       message: {event: {type: 'team_join'}, type: 'event_callback'},
-      topic:   'fizz_event_team_join_buzz',
+      type:    'event',
     };
     request(app())
       .post('/events')
@@ -95,8 +95,9 @@ describe('API | POST /events', function() {
 describe('API | POST /slash/:cmd', function() {
   it('Responds with message and topic', function(done) {
     let exp = {
+      id:      'fizz',
       message: {fizz: 'buzz'},
-      topic:   'fizz_slash_fizz_buzz',
+      type:    'slash',
     };
     request(app())
       .post('/slash/fizz')
@@ -127,8 +128,9 @@ describe('API | Verification', function() {
 
   it('Skips verification', function(done) {
     let exp = {
+      id:      'fizz',
       message: {fizz: 'buzz'},
-      topic:   'fizz_slash_fizz_buzz',
+      type:    'slash',
     };
     process.env.DISABLE_VERIFICATION = '1';
     request(app())
@@ -148,8 +150,9 @@ describe('API | Verification', function() {
     let data = `v0:${ts}:payload=%7B%22callback_id%22%3A%22fizz%22%7D`;
     let sig  = `v0=${hmac.update(data).digest('hex')}`;
     let exp  = {
+      id:      'fizz',
       message: {callback_id: 'fizz'},
-      topic:   'callback_fizz',
+      type:    'callback',
     };
     request(err())
       .post('/callbacks')

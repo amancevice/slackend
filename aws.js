@@ -31,8 +31,6 @@ exports = module.exports = (options = {}) => {
         signing_secret:     process.env.SLACK_SIGNING_SECRET,
         signing_version:    process.env.SLACK_SIGNING_VERSION,
         token:              process.env.SLACK_TOKEN,
-        topic_prefix:       process.env.AWS_SNS_PREFIX,
-        topic_suffix:       process.env.AWS_SNS_SUFFIX,
       }), publish);
     }
     return app;
@@ -78,7 +76,17 @@ exports = module.exports = (options = {}) => {
     slackend.logger.info(`PUT ${JSON.stringify(res.locals)}`);
     return sns.publish({
       Message:  JSON.stringify(res.locals.message),
-      TopicArn: res.locals.topic,
+      TopicArn: process.env.AWS_SNS_TOPIC_ARN,
+      MessageAttributes: {
+        type: {
+          DataType:    'String',
+          StringValue: res.locals.type,
+        },
+        id: {
+          DataType:    'String',
+          StringValue: res.locals.id,
+        },
+      },
     }).promise().then(() => {
       if (req.path === '/oauth') {
         let uri = process.env.SLACK_OAUTH_SUCCESS_URI || 'slack://channel?team={TEAM_ID}&id={CHANNEL_ID}';

@@ -18,5 +18,12 @@ const api = slackend({
   signing_version:    process.env.SLACK_SIGNING_VERSION,
   token:              process.env.SLACK_TOKEN,
 });
-app.use(BASE_URL, api, (req, res) => res.json(res.locals));
+const pub = (req, res) => {
+  console.log(`\n${req.method} ${req.path}`);
+  console.log(`├── type:    ${res.locals.type}`);
+  console.log(`├── id:      ${res.locals.id}`);
+  console.log(`└── message: ${JSON.stringify(res.locals.message)}`);
+  res.json(res.locals);
+};
+app.use(BASE_URL, api, pub);
 app.listen(PORT, () => console.log(`> Listening on ${HOST}:${PORT}${BASE_URL}`));
