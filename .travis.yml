@@ -3,7 +3,7 @@ env:
 - RUNTIME=nodejs8.10
 - RUNTIME=nodejs10.x
 script:
-- make runtime=${RUNTIME}
+- make test
 deploy:
   provider: npm
   email: alexander.mancevice@gmail.com
