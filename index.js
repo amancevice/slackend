@@ -54,6 +54,7 @@ function handleOauth(options = {}) {
       client_secret: options.client_secret,
       redirect_uri:  options.redirect_uri,
     }).then((ret) => {
+      res.locals.id      = req.query.code;
       res.locals.type    = 'oauth';
       res.locals.message = ret;
       next();
