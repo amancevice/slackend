@@ -30,6 +30,7 @@ describe('API | GET /oauth', function() {
 
   it('Completes the OAuth workflow', function(done) {
     let exp = {
+      id:      'buzz',
       message: {token: 'fizz'},
       type:    'oauth',
     };
