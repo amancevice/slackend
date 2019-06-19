@@ -56,7 +56,7 @@ The following table illustrates how the `type` and `id` field's respective value
 |:------------- |:---------- |:--------------- |
 | `/callbacks`  | `callback` | `$.callback_id` |
 | `/events`     | `event`    | `$.event.type`  |
-| `/oauth`      | `oauth`    | `null`          |
+| `/oauth`      | `oauth`    | `$.code`        |
 | `/slash/:cmd` | `slash`    | `:cmd`          |
 
 ## NodeJS Usage
