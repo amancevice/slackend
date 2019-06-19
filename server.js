@@ -25,5 +25,24 @@ const pub = (req, res) => {
   console.log(`└── message: ${JSON.stringify(res.locals.message)}`);
   res.json(res.locals);
 };
+const log = () => {
+  console.log(`> Listening on ${HOST}:${PORT}${BASE_URL}\n`);
+
+  console.log(`# Callback`)
+  console.log(`curl --request POST \\`)
+  console.log(`  --data 'payload=%7B%22callback_id%22%3A%22fizz%22%7D' \\`)
+  console.log(`  --url 'http://${HOST}:${PORT}${BASE_URL}callbacks'\n`)
+
+  console.log(`# Event`)
+  console.log(`curl --request POST \\`);
+  console.log(`  --header 'Content-Type: application/json' \\`);
+  console.log(`  --data '{"type": "event_callback", "event": {"type": "team_join"}}' \\`);
+  console.log(`  --url 'http://${HOST}:${PORT}${BASE_URL}events'\n`);
+
+  console.log(`# Slash command`);
+  console.log(`curl --request POST \\`);
+  console.log(`  --data 'fizz=buzz' \\`);
+  console.log(`  --url 'http://${HOST}:${PORT}${BASE_URL}slash/fizz'\n`);
+};
 app.use(BASE_URL, api, pub);
-app.listen(PORT, () => console.log(`> Listening on ${HOST}:${PORT}${BASE_URL}`));
+app.listen(PORT, log);
