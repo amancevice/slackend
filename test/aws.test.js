@@ -15,13 +15,15 @@ const MOCK_SECRET = {
 };
 
 const mockRoute = (req, res, next) => {
-  res.locals.topic   = 'slack_test_topic';
-  res.locals.message = {
-    ok:               true,
-    team_id:          'T12345678',
-    incoming_webhook: {
-      channel_id: 'C12345678',
-    }
+  res.locals.slack = {
+    topic: 'slack_test_topic',
+    message: {
+      ok:      true,
+      team_id: 'T12345678',
+      incoming_webhook: {
+        channel_id: 'C12345678',
+      },
+    },
   };
   next();
 };

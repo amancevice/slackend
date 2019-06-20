@@ -75,23 +75,24 @@ exports = module.exports = (options = {}) => {
   function publish(req, res) {
     slackend.logger.info(`PUT ${JSON.stringify(res.locals)}`);
     return sns.publish({
-      Message:  JSON.stringify(res.locals.message),
+      Message:  JSON.stringify(res.locals.slack.message),
       TopicArn: process.env.AWS_SNS_TOPIC_ARN,
       MessageAttributes: {
         type: {
           DataType:    'String',
-          StringValue: res.locals.type,
+          StringValue: res.locals.slack.type,
         },
         id: {
           DataType:    'String',
-          StringValue: res.locals.id,
+          StringValue: res.locals.slack.id,
         },
       },
     }).promise().then(() => {
       if (req.path === '/oauth') {
         let uri = process.env.SLACK_OAUTH_SUCCESS_URI || 'slack://channel?team={TEAM_ID}&id={CHANNEL_ID}';
-        uri = uri.replace('{TEAM_ID}', res.locals.message.team_id);
-        uri = uri.replace('{CHANNEL_ID}', res.locals.message.incoming_webhook && res.locals.message.incoming_webhook.channel_id);
+        uri = uri.replace('{TEAM_ID}', res.locals.slack.message.team_id);
+        uri = uri.replace('{CHANNEL_ID}', res.locals.slack.message.incoming_webhook
+          && res.locals.slack.message.incoming_webhook.channel_id);
         uri = url.parse(uri, true);
         res.redirect(uri.format());
       } else {

@@ -54,9 +54,11 @@ function handleOAuth(options = {}) {
       client_secret: options.client_secret,
       redirect_uri:  options.redirect_uri,
     }).then((ret) => {
-      res.locals.id      = req.query.code;
-      res.locals.type    = 'oauth';
-      res.locals.message = ret;
+      res.locals.slack = {
+        id:      req.query.code,
+        message: ret,
+        type:    'oauth',
+      };
       next();
     }).catch((err) => {
       logger.error(err);
@@ -71,21 +73,27 @@ function handleOAuth(options = {}) {
 
 function handleCallback(options = {}) {
   return (req, res, next) => {
-    res.locals.type    = 'callback';
-    res.locals.message = req.body = JSON.parse(qs.parse(req.body).payload);
-    res.locals.id      = req.body.callback_id;
+    req.body = JSON.parse(qs.parse(req.body).payload);
+    res.locals.slack = {
+      id:      req.body.callback_id,
+      message: req.body,
+      type:    'callback',
+    };
     next();
   };
 }
 
 function handleEvent(options = {}) {
   return (req, res, next) => {
-    res.locals.type    = 'event';
-    res.locals.message = req.body = JSON.parse(req.body);
+    req.body = JSON.parse(req.body);
     if (req.body.type === 'url_verification') {
       res.json({challenge: req.body.challenge});
     } else {
-      res.locals.id = req.body.event.type;
+      res.locals.slack = {
+        id:      req.body.event.type,
+        message: req.body,
+        type:    'event',
+      };
       next();
     }
   };
@@ -93,9 +101,12 @@ function handleEvent(options = {}) {
 
 function handleSlashCmd(options = {}) {
   return (req, res, next) => {
-    res.locals.type    = 'slash'
-    res.locals.message = req.body = qs.parse(req.body);
-    res.locals.id      = req.params.cmd;
+    req.body = qs.parse(req.body);
+    res.locals.slack = {
+      id:      req.params.cmd,
+      message: req.body,
+      type:    'slash'
+    };
     next();
   };
 }
