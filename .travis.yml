@@ -1,9 +1,11 @@
 language: node_js
-env:
-- RUNTIME=nodejs8.10
-- RUNTIME=nodejs10.x
+node_js:
+- "8.10"
+- "10"
+install:
+- npm install
 script:
-- make test
+- npm test
 deploy:
   provider: npm
   email: alexander.mancevice@gmail.com
