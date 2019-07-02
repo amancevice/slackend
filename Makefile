@@ -3,10 +3,11 @@ name      := $(shell node -p "require('./package.json').name")
 version   := $(shell node -p "require('./package.json').version")
 build     := $(shell git describe --tags --always)
 runtime   := $(shell echo "$${RUNTIME:-nodejs10.x}")
+shells    := $(foreach stage,$(stages),shell@$(stage))
 iidfile   := .docker/$(build)-$(runtime)
 digest     = $(shell cat $(iidfile)$(1))
 
-.PHONY: all clean test $(foreach stage,$(stages),shell@$(stage))
+.PHONY: all clean up $(stages) $(shells)
 
 all: package-lock.json $(name)-$(version).tgz
 
@@ -21,14 +22,21 @@ $(iidfile)@%: | .docker
 	--tag $(name):$(build)-$* \
 	--target $* .
 
-package-lock.json $(name)-$(version).tgz: $(iidfile)@build
-	docker run --rm -w /var/task/ $(call digest,@build) cat $@ > $@
+package-lock.json $(name)-$(version).tgz: build
+	docker run --rm $(call digest,@$<) cat $@ > $@
 
 clean:
 	-docker image rm -f $(shell awk {print} .docker/*)
 	-rm -rf .docker *.tgz
 
-shell@%: $(iidfile)@%
-	docker run --rm -it $(call digest,@$*) /bin/bash
+up: build .env
+	docker run --rm \
+	--publish 3000:3000 \
+	$(call digest,@$<) \
+	npm start
 
-test: all $(iidfile)@test
+
+$(stages): %: $(iidfile)@%
+
+$(shells): shell@%: % .env
+	docker run --rm -it $(call digest,@$*) /bin/bash
