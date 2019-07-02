@@ -20,9 +20,10 @@ const api = slackend({
 });
 const pub = (req, res) => {
   console.log(`\n${req.method} ${req.path}`);
-  console.log(`├── type:    ${res.locals.type}`);
-  console.log(`├── id:      ${res.locals.id}`);
-  console.log(`└── message: ${JSON.stringify(res.locals.message)}`);
+  console.log(res.locals);
+  console.log(`├── type:    ${res.locals.slack.type}`);
+  console.log(`├── id:      ${res.locals.slack.id}`);
+  console.log(`└── message: ${JSON.stringify(res.locals.slack.message)}`);
   res.json(res.locals);
 };
 const log = () => {
