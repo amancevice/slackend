@@ -6,6 +6,9 @@ install:
 - npm install
 script:
 - npm test
+after_success:
+- npm install codecov
+- codecov
 deploy:
   provider: npm
   email: alexander.mancevice@gmail.com
