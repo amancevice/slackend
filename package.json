@@ -12,7 +12,6 @@
   "devDependencies": {
     "aws-sdk": "^2.462.0",
     "aws-serverless-express": "^3.3.6",
-    "codecov": "^3.5.0",
     "dotenv": "^7.0.0",
     "mocha": "^5.2.0",
     "nyc": "^14.1.1",
