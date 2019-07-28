@@ -13,10 +13,10 @@ slackend.logger.error.log = console.log.bind(console);
 
 exports = module.exports = (options = {}) => {
   let app            = options.app;
-  let secretsmanager = options.secretsmanager || new SecretsManager();
   let server         = options.server;
   let slack          = options.slack;
-  let sns            = options.sns || new SNS();
+  let secretsmanager = options.secretsmanager || new SecretsManager();
+  let sns            = options.sns            || new SNS();
 
   async function getApp() {
     if (!app) {
@@ -63,9 +63,8 @@ exports = module.exports = (options = {}) => {
     };
   }
 
-  function publish(req, res) {
-    slackend.logger.info(`PUT ${JSON.stringify(res.locals)}`);
-    return sns.publish({
+  function publishOptions(req, res) {
+    return {
       Message:  JSON.stringify(res.locals.slack.message),
       TopicArn: process.env.AWS_SNS_TOPIC_ARN,
       MessageAttributes: {
@@ -78,20 +77,28 @@ exports = module.exports = (options = {}) => {
           StringValue: res.locals.slack.id,
         },
       },
-    }).promise().then(() => {
-      if (req.path === '/oauth') {
-        let uri = process.env.SLACK_OAUTH_SUCCESS_URI || 'slack://channel?team={TEAM_ID}&id={CHANNEL_ID}';
-        uri = uri.replace('{TEAM_ID}', res.locals.slack.message.team_id);
-        uri = uri.replace('{CHANNEL_ID}', res.locals.slack.message.incoming_webhook
-          && res.locals.slack.message.incoming_webhook.channel_id);
-        uri = url.parse(uri, true);
-        res.redirect(uri.format());
-      } else {
-        res.status(204).send();
-      }
-    }).catch((err) => {
-      res.status(400).send(err);
-    });
+    };
+  }
+
+  function publishHandler(req, res) {
+    if (req.path === '/oauth') {
+      let uri        = process.env.SLACK_OAUTH_SUCCESS_URI       || 'slack://channel?team={TEAM_ID}&id={CHANNEL_ID}',
+          channel_id = res.locals.slack.message.incoming_webhook && res.locals.slack.message.incoming_webhook.channel_id,
+          team_id    = res.locals.slack.message.team_id;
+      uri = uri.replace('{TEAM_ID}',    team_id);
+      uri = uri.replace('{CHANNEL_ID}', channel_id);
+      uri = url.parse(uri, true).format();
+      res.redirect(uri);
+    } else {
+      res.status(204).send();
+    }
+  }
+
+  function publish(req, res) {
+    slackend.logger.info(`PUT ${JSON.stringify(res.locals)}`);
+    return sns.publish(publishOptions(req, res)).promise()
+      .then(() => publishHandler(req, res))
+      .catch((err) => res.status(400).send(err));
   }
 
   return {

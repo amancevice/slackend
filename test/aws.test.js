@@ -39,7 +39,7 @@ const mockSecretsManager = {
 const mockSns = {
   publish: (options) => {
     return {
-      promise: () => Promise.resolve(),
+      promise: () => Promise.resolve('SNS SUCCESS!'),
     };
   },
 };
@@ -47,7 +47,7 @@ const mockSns = {
 const mockSnsFail = {
   publish: (options) => {
     return {
-      promise: () => Promise.reject(),
+      promise: () => Promise.reject('SNS ERROR!'),
     };
   },
 };
@@ -137,7 +137,7 @@ describe('AWS | publish', function() {
     request(app)
       .get('/')
       .set('Accept', 'application/json')
-      .expect(400, done);
+      .expect(400, 'SNS ERROR!', done);
   });
 
   it('OAuth redirects to Slack', function(done) {
@@ -151,7 +151,7 @@ describe('AWS | publish', function() {
   })
 })
 
-describe('AWS | Handler', function() {
+describe('AWS | handler', function() {
   afterEach(() => { lambda.getServer().then((server) => server.close()) });
 
   it('Succeeds with 204', async function() {
@@ -170,6 +170,6 @@ describe('AWS | Handler', function() {
     const context = {succeed: () => {}};
     const res     = await lambda.handler(event, context);
     assert.equal(res.statusCode, 400);
-    assert.equal(res.body, '');
+    assert.equal(res.body, 'SNS ERROR!');
   });
 });
