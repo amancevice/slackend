@@ -13,6 +13,23 @@ const logger = {
   error: debug('slackend:error'),
 };
 
+function calculateSignature(req, options = {}) {
+  const ts       = req.headers['x-slack-request-timestamp'];
+  const given    = req.headers['x-slack-signature'];
+  const hmac     = crypto.createHmac('sha256', options.signing_secret);
+  const data     = `${options.signing_version}:${ts}:${req.body}`;
+  const computed = `${options.signing_version}=${hmac.update(data).digest('hex')}`;
+  const delta    = Math.abs(new Date() / 1000 - ts);
+  const res      = {
+    given:    given,
+    computed: computed,
+    delta:    delta,
+  }
+  logger.debug(`SIGNING DATA ${data}`);
+  logger.debug(`SIGNATURES ${JSON.stringify(res)}`);
+  return res;
+}
+
 function verifyRequest(options = {}) {
   return (req, res, next) => {
     logger.debug(`HEADERS ${JSON.stringify(req.headers)}`);
@@ -24,18 +41,11 @@ function verifyRequest(options = {}) {
       logger.warn('VERIFICATION DISABLED - NO SIGNING SECRET');
       next();
     } else {
-      const ts    = req.headers['x-slack-request-timestamp'];
-      const ret   = req.headers['x-slack-signature'];
-      const hmac  = crypto.createHmac('sha256', options.signing_secret);
-      const data  = `${options.signing_version}:${ts}:${req.body}`;
-      const exp   = `${options.signing_version}=${hmac.update(data).digest('hex')}`;
-      const delta = Math.abs(new Date() / 1000 - ts);
-      logger.debug(`SIGNING DATA ${data}`);
-      logger.debug(`SIGNATURES ${JSON.stringify({given: ret, calculated: exp})}`);
-      if (delta > 60 * 5) {
+      const sign = calculateSignature(req, options);
+      if (sign.delta > 60 * 5) {
         logger.error('Request too old');
         res.status(403).json({error: 'Request too old'});
-      } else if (ret !== exp) {
+      } else if (sign.given !== sign.computed) {
         logger.error('Signatures do not match');
         res.status(403).json({error: 'Signatures do not match'});
       } else {
