@@ -1,7 +1,0 @@
-*
-!test/
-!*.js
-!.npmignore
-!LICENSE*
-!README*
-!package*.json
