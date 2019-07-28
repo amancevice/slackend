@@ -114,7 +114,14 @@ function handleSlashCmd(options = {}) {
 exports = module.exports = (options = {}) => {
 
   // Set defaults
-  options.signing_version = options.signing_version || 'v0';
+  options.client_id          = options.client_id          || process.env.SLACK_CLIENT_ID;
+  options.client_secret      = options.client_secret      || process.env.SLACK_CLIENT_SECRET;
+  options.oauth_error_uri    = options.oauth_error_uri    || process.env.SLACK_OAUTH_ERROR_URI;
+  options.oauth_redirect_uri = options.oauth_redirect_uri || process.env.SLACK_OAUTH_REDIRECT_URI;
+  options.oauth_success_uri  = options.oauth_success_uri  || process.env.SLACK_OAUTH_SUCCESS_URI;
+  options.signing_secret     = options.signing_secret     || process.env.SLACK_SIGNING_SECRET;
+  options.signing_version    = options.signing_version    || process.env.SLACK_SIGNING_VERSION;
+  options.token              = options.token              || process.env.SLACK_TOKEN;
 
   // Create express router
   const app = express();

@@ -12,14 +12,7 @@ const app    = express();
 const info   = debug('slackend:google:info');
 const pubsub = new PubSub();
 
-app.use(BASE_URL, slackend({
-  client_id:       process.env.SLACK_CLIENT_ID,
-  client_secret:   process.env.SLACK_CLIENT_SECRET,
-  redirect_uri:    process.env.SLACK_OAUTH_REDIRECT_URI,
-  signing_secret:  process.env.SLACK_SIGNING_SECRET,
-  signing_version: process.env.SLACK_SIGNING_VERSION,
-  token:           process.env.SLACK_TOKEN,
-}), (req, res) => {
+app.use(BASE_URL, slackend(), (req, res) => {
   res.locals.topic = `${TOPIC_PREFIX}${res.locals.topic}`;
   slackend.logger.info(JSON.stringify(res.locals));
   const data = Buffer.from(JSON.stringify(res.locals.message));
