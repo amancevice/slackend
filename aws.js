@@ -95,8 +95,9 @@ exports = module.exports = (options = {}) => {
   }
 
   function publish(req, res) {
-    slackend.logger.info(`PUT ${JSON.stringify(res.locals)}`);
-    return sns.publish(publishOptions(req, res)).promise()
+    let options = publishOptions(req, res);
+    slackend.logger.info(`PUBLISH ${JSON.stringify(options)}`);
+    return sns.publish(options).promise()
       .then(() => publishHandler(req, res))
       .catch((err) => res.status(400).send(err));
   }
