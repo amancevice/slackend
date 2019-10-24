@@ -30,4 +30,3 @@ deploy:
   on:
     tags: true
     repo: amancevice/slackend
-  skip_cleanup: true
