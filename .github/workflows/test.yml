@@ -1,0 +1,36 @@
+name: Test
+on:
+  pull_request:
+  push:
+    branches:
+    - master
+  schedule:
+  - cron: "11 21 * * *"
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version:
+        - 8.x
+        - 10.x
+        - 12.x
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Set up code climate
+      uses: amancevice/code-climate-action@v0
+      with:
+        cc_test_reporter_id: ${{ secrets.CC_TEST_REPORTER_ID }}
+        command: before-build
+    - name: Run npm install
+      run: npm install
+    - name: Run npm test
+      run: npm test
+    - name: Send coverage report
+      uses: amancevice/code-climate-action@v0
+      with:
+        cc_test_reporter_id: ${{ secrets.CC_TEST_REPORTER_ID }}
+        command: after-build -t lcov
