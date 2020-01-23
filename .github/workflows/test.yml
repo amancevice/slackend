@@ -33,4 +33,4 @@ jobs:
       uses: amancevice/code-climate-action@v0
       with:
         cc_test_reporter_id: ${{ secrets.CC_TEST_REPORTER_ID }}
-        command: after-build -t lcov
+        command: after-build
