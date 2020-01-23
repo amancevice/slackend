@@ -15,7 +15,7 @@ const pub = (req, res) => {
   console.log(`├── type:    ${res.locals.slack.type}`);
   console.log(`├── id:      ${res.locals.slack.id}`);
   console.log(`└── message: ${JSON.stringify(res.locals.slack.message)}`);
-  res.json(res.locals);
+  res.json(res.locals.slack);
 };
 const log = () => {
   console.log(`> Listening on ${HOST}:${PORT}${BASE_URL}\n`);

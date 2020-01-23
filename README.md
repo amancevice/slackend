@@ -29,7 +29,172 @@ In production it is expected that users will attach their own publishing functio
 
 ## Drawbacks
 
-- Slack has a strict 3-second lifetime for many API operations, so it is critical that your asynchronous tasks complete quickly. Cold start times of some serverless computing platforms may be prohibitively slow.
+- Slack has a strict 3-second lifetime for many API operations, so it is critical that your asynchronous tasks complete quickly. Cold start times of some serverless computing platforms may be prohibitively slow. (_Note: this concern can be effectively eliminated on most platforms by configuring your serverless functions for speed_)
+
+## Processing Events
+
+In very simple terms, all events are processed by:
+
+- Extracting `type` and `id` fields from the POST payload.
+- Nesting the payload in a new JSON object containing the `type`, `id`, and `message` fields.
+- Forwarding the new payload to your processing topic/queue
+
+The general idea is to infer some kind of routing logic from the request.
+
+The `type` field's value is taken from the path of the original request and will be one of `callback`, `event`, `oauth`, or `slash`.
+
+The following table illustrates how the `type` and `id` field's respective values are calculated:
+
+| Endpoint      | Type       | ID Recipe       |
+|:------------- |:---------- |:--------------- |
+| `/callbacks`  | `callback` | `$.callback_id` |
+| `/events`     | `event`    | `$.event.type`  |
+| `/oauth`      | `oauth`    | `$.code`        |
+| `/slash/:cmd` | `slash`    | `:cmd`          |
+
+The processed payload is stored in the `slack` variable of the express response locals.
+
+Here is an example configuration that simply responds to incoming requests with the processed payload:
+
+```javascript
+const express = require('express');
+const slackend = require('slackend');
+const app = express();
+app.use(slackend(), (req, res) => { res.json(res.locals.slack); });
+app.listen(3000);
+```
+
+## Example Events
+
+The following examples illustrate how different kinds of events from Slack are processed.
+
+### Callbacks
+
+A callback event occurs when a user initiates any [App Action](https://api.slack.com/reference/interaction-payloads/actions), like pushing a button or choosing a menu item.
+
+Callback payloads are passed as a query string parameter of the POST.
+
+Example incoming payload:
+
+```javascript
+// curl -X POST /callbacks?payload=...
+{
+  token: 'Nj2rfC2hU8mAfgaJLemZgO7H',
+  callback_id: 'chirp_message',
+  type: 'message_action',
+  trigger_id: '13345224609.8534564800.6f8ab1f53e13d0cd15f96106292d5536',
+  response_url: 'https://hooks.slack.com/app-actions/T0MJR11A4/21974584944/yk1S9ndf35Q1flupVG5JbpM6',
+  team: {
+    id: 'T0MJRM1A7',
+    domain: 'pandamonium',
+  },
+  channel: {
+    id: 'D0LFFBKLZ',
+    name: 'cats'
+  },
+  user: {
+    id: 'U0D15K92L',
+    name: 'dr_maomao'
+  },
+  message: {
+    type: 'message',
+    user: 'U0MJRG1AL',
+    ts: '1516229207.000133',
+    text: "World's smallest big cat! <https://youtube.com/watch?v=W86cTIoMv2U>"
+  }
+}
+```
+
+Processed payload to forward:
+
+```javascript
+{
+  type: 'callback',    // Slack event type
+  id: 'chirp_message', // Taken from $.callback_id in payload
+  message: { /* … */ } // Original incoming payload
+}
+```
+
+### Events
+
+Events are triggered by the [Events API](https://api.slack.com/events-api) when a particular activity happens on Slack, like the creation or deletion of a channel, or a reaction being added to a message; almost everything is traceable using the Events API.
+
+Events are sent as JSON in the body of a POST request.
+
+Example incoming payload:
+
+```javascript
+// curl -X POST -d '{...}' /events
+{
+  token: 'XXYYZZ',
+  team_id: 'TXXXXXXXX',
+  api_app_id: 'AXXXXXXXXX',
+  event: {
+    type: 'name_of_event',
+    event_ts: '1234567890.123456',
+    user: 'UXXXXXXX1',
+    '...': '...'
+  },
+  type: 'event_callback',
+  authed_users: [
+    'UXXXXXXX1',
+    'UXXXXXXX2'
+  ],
+  event_id: 'Ev08MFMKH6',
+  event_time: 1234567890
+}
+```
+
+Processed payload to forward:
+
+```javascript
+{
+  type: 'event',       // Slack event type
+  id: 'name_of_event', // Taken from $event.type in payload
+  message: { /* … */ } // Original incoming payload
+}
+```
+
+### OAuth
+
+*TBD*
+
+### Slash Commands
+
+[Slash commands](https://api.slack.com/slash-commands) are triggered by users posting a message that begins with the character `/`. Every custom slash command you configure requires its own URL to be configured in your Slack App.
+
+Slash command payloads are sent as a query string in the body of the POST request. The name of the slash command is extracted from the final item in the request URL path.
+
+Example incoming payload:
+
+```javascript
+// curl -X POST -d '...' /slash/weather
+{
+  token:'gIkuvaNzQIHg97ATvDxqgjtO',
+  team_id: 'T0001',
+  team_domain: 'example',
+  enterprise_id: 'E0001',
+  enterprise_name: 'Globular Construct Inc',
+  channel_id: 'C2147483705',
+  channel_name: 'test',
+  user_id: 'U2147483697',
+  user_name: 'Steve',
+  command: '/weather',
+  text: '94070',
+  response_url: 'https://hooks.slack.com/commands/1234/5678',
+  trigger_id: '13345224609.738474920.8088930838d88f008e0'
+}
+```
+
+Processed payload to forward:
+
+```javascript
+{
+  type: 'slash',       // Slack event type
+  id: 'weather',       // Taken from request URL
+  message: { /* … */ } // Original incoming payload
+}
+```
 
 ## Serverless Deployment
 
@@ -48,21 +213,6 @@ Once the request &mdash; an OAuth request, a workspace event, a user-initiated c
 If the topic does not exist, the API responds with a `400 - Bad Request` status code.
 
 Using this method, each feature of your app can be added one-by-one independently of the API and is highly scalable.
-
-## Topic Sorting
-
-Requests from Slack are converted to JSON and assigned an `id` and `type` depending on the type and contents of the request. The general idea is to infer some kind of routing logic from the request.
-
-The `type` field's value is taken from the path of the original request and will be one of `callback`, `event`, `oauth`, or `slash`.
-
-The following table illustrates how the `type` and `id` field's respective values are calculated:
-
-| Endpoint      | Type       | ID Recipe       |
-|:------------- |:---------- |:--------------- |
-| `/callbacks`  | `callback` | `$.callback_id` |
-| `/events`     | `event`    | `$.event.type`  |
-| `/oauth`      | `oauth`    | `$.code`        |
-| `/slash/:cmd` | `slash`    | `:cmd`          |
 
 ## NodeJS Usage
 
