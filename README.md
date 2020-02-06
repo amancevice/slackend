@@ -318,7 +318,7 @@ module slackbot_secret {
   slack_user_token     = "${var.slack_user_token}"
 
   // Optional additional secrets
-  secrets {
+  secrets = {
     FIZZ = "buzz"
   }
 }
