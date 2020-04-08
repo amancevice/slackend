@@ -22,7 +22,7 @@ const log = () => {
 
   console.log(`# Callback`)
   console.log(`curl --request POST \\`)
-  console.log(`  --data 'payload=%7B%22callback_id%22%3A%22fizz%22%7D' \\`)
+  console.log(`  --data 'payload=%7B%22type%22%3A%22block_actions%22%7D' \\`)
   console.log(`  --url 'http://${HOST}:${PORT}${BASE_URL}callbacks'\n`)
 
   console.log(`# Event`)

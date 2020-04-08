@@ -61,14 +61,14 @@ describe('API | POST /callbacks', function() {
   it('Responds with message and topic', function(done) {
     let exp = {
       slack: {
-        id:      'fizz',
-        message: {callback_id: 'fizz'},
+        id:      'block_actions',
+        message: {type: 'block_actions'},
         type:    'callback',
       },
     };
     request(app())
       .post('/callbacks')
-      .send('payload=%7B%22callback_id%22%3A%22fizz%22%7D')
+      .send('payload=%7B%22type%22%3A%22block_actions%22%7D')
       .set('Accept', 'application/json')
       .expect(200, exp, done);
   });
@@ -120,7 +120,7 @@ describe('API | Verification', function() {
   it('Errors with bad signature', function(done) {
     request(err())
       .post('/callbacks')
-      .send('payload=%7B%22callback_id%22%3A%22fizz%22%7D')
+      .send('payload=%7B%22type%22%3A%22block_actions%22%7D')
       .set('Accept', 'application/json')
       .expect(403, {error: 'Signatures do not match'}, done);
   });
@@ -128,7 +128,7 @@ describe('API | Verification', function() {
   it('Errors with bad timestamp', function(done) {
     request(err())
       .post('/callbacks')
-      .send('payload=%7B%22callback_id%22%3A%22fizz%22%7D')
+      .send('payload=%7B%22type%22%3A%22block_actions%22%7D')
       .set('Accept', 'application/json')
       .set('x-slack-request-timestamp', '0')
       .set('x-slack-signature', 'v0=c340868077bc902f57e4f721a98a957880c7365bea1bb1a9e6fad1a5ebc8ce9c')
@@ -158,18 +158,18 @@ describe('API | Verification', function() {
   it('Verifies the request', function(done) {
     let ts   = new Date() / 1000;
     let hmac = crypto.createHmac('sha256', 'fake');
-    let data = `v0:${ts}:payload=%7B%22callback_id%22%3A%22fizz%22%7D`;
+    let data = `v0:${ts}:payload=%7B%22type%22%3A%22block_actions%22%7D`;
     let sig  = `v0=${hmac.update(data).digest('hex')}`;
     let exp  = {
       slack: {
-        id:      'fizz',
-        message: {callback_id: 'fizz'},
+        id:      'block_actions',
+        message: {type: 'block_actions'},
         type:    'callback',
       },
     };
     request(err())
       .post('/callbacks')
-      .send('payload=%7B%22callback_id%22%3A%22fizz%22%7D')
+      .send('payload=%7B%22type%22%3A%22block_actions%22%7D')
       .set('Accept', 'application/json')
       .set('x-slack-request-timestamp', `${ts}`)
       .set('x-slack-signature', sig)

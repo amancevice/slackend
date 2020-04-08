@@ -85,7 +85,7 @@ function handleCallback(options = {}) {
   return (req, res, next) => {
     req.body = JSON.parse(qs.parse(req.body).payload);
     res.locals.slack = {
-      id:      req.body.callback_id,
+      id:      req.body.type,
       message: req.body,
       type:    'callback',
     };
