@@ -64,19 +64,17 @@ exports = module.exports = (options = {}) => {
   }
 
   function publishOptions(req, res) {
+    let attrs = {};
+    if (res.locals.slack.type) {
+      attrs.type = {DataType: 'String', StringValue: res.locals.slack.type};
+    }
+    if (res.locals.slack.id) {
+      attrs.id = {DataType: 'String', StringValue: res.locals.slack.id};
+    }
     return {
       Message:  JSON.stringify(res.locals.slack.message),
       TopicArn: process.env.AWS_SNS_TOPIC_ARN,
-      MessageAttributes: {
-        type: {
-          DataType:    'String',
-          StringValue: res.locals.slack.type,
-        },
-        id: {
-          DataType:    'String',
-          StringValue: res.locals.slack.id,
-        },
-      },
+      MessageAttributes: attrs,
     };
   }
 
