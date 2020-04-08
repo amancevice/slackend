@@ -90,6 +90,7 @@ exports = module.exports = (options = {}) => {
       uri = url.parse(uri, true).format();
       res.redirect(uri);
     } else {
+      slackend.logger.info(`RESPONSE [204]`);
       res.status(204).send();
     }
   }
@@ -99,7 +100,10 @@ exports = module.exports = (options = {}) => {
     slackend.logger.info(`PUBLISH ${JSON.stringify(options)}`);
     return sns.publish(options).promise()
       .then(() => publishHandler(req, res))
-      .catch((err) => res.status(400).send(err));
+      .catch((err) => {
+        slackend.logger.warn(`RESPONSE [400] ${JSON.stringify(err)}`);
+        res.status(400).send(err);
+      });
   }
 
   return {
