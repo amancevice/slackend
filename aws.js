@@ -59,7 +59,10 @@ exports = module.exports = (options = {}) => {
       await getSlack();
       const func = slack.chat[method];
       const msgs = event.Records.map((rec) => JSON.parse(rec.Sns.Message));
-      return await Promise.all(msgs.map((msg) => func(msg)));
+      return await Promise.all(msgs.map((msg) => {
+        slackend.logger.info(`slack.chat.${method} ${JSON.stringify(msg)}`);
+        return func(msg);
+      }));
     };
   }
 
