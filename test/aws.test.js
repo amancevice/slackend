@@ -20,6 +20,7 @@ const mockRoute = (req, res, next) => {
     message: {
       ok:      true,
       team_id: 'T12345678',
+      callback_id: 'fizz',
       incoming_webhook: {
         channel_id: 'C12345678',
       },

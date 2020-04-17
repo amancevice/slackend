@@ -74,6 +74,9 @@ exports = module.exports = (options = {}) => {
     if (res.locals.slack.id) {
       attrs.id = {DataType: 'String', StringValue: res.locals.slack.id};
     }
+    if (res.locals.slack.message.callback_id) {
+      attrs.callback_id = {DataType: 'String', StringValue: res.locals.slack.message.callback_id};
+    }
     return {
       Message:  JSON.stringify(res.locals.slack.message),
       TopicArn: process.env.AWS_SNS_TOPIC_ARN,
