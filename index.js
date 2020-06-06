@@ -85,15 +85,11 @@ function handleCallback(options = {}) {
   return (req, res, next) => {
     req.body = JSON.parse(qs.parse(req.body).payload);
     res.locals.slack = {
-      id:      req.body.type,
-      message: req.body,
-      type:    'callback',
+      callback_id: req.body.callback_id || (req.body.view && req.body.view.callback_id),
+      id:          req.body.type,
+      message:     req.body,
+      type:        'callback',
     };
-    if (req.body.callback_id) {
-      res.locals.slack.callback_id = req.body.callback_id;
-    } else if (req.body.view && req.body.view.callback_id) {
-      res.locals.slack.callback_id = req.body.view.callback_id;
-    }
     next();
   };
 }

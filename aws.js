@@ -13,8 +13,8 @@ slackend.logger.error.log = console.log.bind(console);
 
 function stringMessageAttribute(value) {
   return {
-    DataType: 'String',
-    StringValue: value.toString(),
+    DataType:    'String',
+    StringValue: `${value}`,
   };
 }
 
