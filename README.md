@@ -1,9 +1,9 @@
 # Asynchronous Slackbot
 
-[![Build Status](https://travis-ci.com/amancevice/slackend.svg?branch=master)](https://travis-ci.com/amancevice/slackend)
-[![NPM Version](https://badge.fury.io/js/slackend.svg)](https://badge.fury.io/js/slackend)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/1648179274faf0e45541/test_coverage)](https://codeclimate.com/github/amancevice/slackend/test_coverage)
-[![Maintainability](https://api.codeclimate.com/v1/badges/1648179274faf0e45541/maintainability)](https://codeclimate.com/github/amancevice/slackend/maintainability)
+![npm](https://img.shields.io/npm/v/slackend?style=flat-square)
+[![test](https://img.shields.io/github/workflow/status/amancevice/slackend/test?logo=github&style=flat-square)](https://github.com/amancevice/slackend/actions)
+[![coverage](https://img.shields.io/codeclimate/coverage/amancevice/slackend?logo=code-climate&style=flat-square)](https://codeclimate.com/github/amancevice/slackend/test_coverage)
+[![maintainability](https://img.shields.io/codeclimate/maintainability/amancevice/slackend?logo=code-climate&style=flat-square)](https://codeclimate.com/github/amancevice/slackend/maintainability)
 
 A simple, asynchronous back end for your Slack app.
 
