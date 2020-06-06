@@ -11,10 +11,16 @@ const app = express();
 const api = slackend();
 const pub = (req, res) => {
   console.log(`\n${req.method} ${req.path}`);
-  console.log(res.locals);
-  console.log(`├── type:    ${res.locals.slack.type}`);
-  console.log(`├── id:      ${res.locals.slack.id}`);
-  console.log(`└── message: ${JSON.stringify(res.locals.slack.message)}`);
+  if (res.locals.slack.callback_id) {
+    console.log(`├── type:        ${res.locals.slack.type}`);
+    console.log(`├── id:          ${res.locals.slack.id}`);
+    console.log(`├── callback_id: ${res.locals.slack.callback_id}`);
+    console.log(`└── message:     ${JSON.stringify(res.locals.slack.message)}`);
+  } else {
+    console.log(`├── type:    ${res.locals.slack.type}`);
+    console.log(`├── id:      ${res.locals.slack.id}`);
+    console.log(`└── message: ${JSON.stringify(res.locals.slack.message)}`);
+  }
   res.json(res.locals.slack);
 };
 const log = () => {
@@ -22,7 +28,7 @@ const log = () => {
 
   console.log(`# Callback`)
   console.log(`curl --request POST \\`)
-  console.log(`  --data 'payload=%7B%22type%22%3A%22block_actions%22%7D' \\`)
+  console.log(`  --data 'payload=%7B%22type%22%3A%22block_actions%22%2C%22view%22%3A%7B%22callback_id%22%3A%22callback_1%22%7D%7D' \\`)
   console.log(`  --url 'http://${HOST}:${PORT}${BASE_URL}callbacks'\n`)
 
   console.log(`# Event`)
