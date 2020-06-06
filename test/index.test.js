@@ -1,5 +1,6 @@
 const crypto   = require('crypto');
 const express  = require('express');
+const qs       = require('querystring');
 const request  = require('supertest');
 const slackend = require('../index');
 
@@ -27,7 +28,6 @@ describe('API | GET /health', function() {
 })
 
 describe('API | GET /oauth', function() {
-
   it('Completes the OAuth workflow', function(done) {
     let exp = {
       slack: {
@@ -59,16 +59,35 @@ describe('API | GET /oauth', function() {
 
 describe('API | POST /callbacks', function() {
   it('Responds with message and topic', function(done) {
+    let msg = {type: 'block_actions', callback_id: 'callback_1'};
     let exp = {
       slack: {
-        id:      'block_actions',
-        message: {type: 'block_actions'},
-        type:    'callback',
+        id:          'block_actions',
+        callback_id: 'callback_1',
+        message:     msg,
+        type:        'callback',
       },
     };
     request(app())
       .post('/callbacks')
-      .send('payload=%7B%22type%22%3A%22block_actions%22%7D')
+      .send(`payload=${qs.escape(JSON.stringify(msg))}`)
+      .set('Accept', 'application/json')
+      .expect(200, exp, done);
+  });
+
+  it('Responds with message and topic (view)', function(done) {
+    let msg = {type: 'block_actions', view: {callback_id: 'callback_1'}};
+    let exp = {
+      slack: {
+        id:          'block_actions',
+        callback_id: 'callback_1',
+        message:     msg,
+        type:        'callback',
+      },
+    };
+    request(app())
+      .post('/callbacks')
+      .send(`payload=${qs.escape(JSON.stringify(msg))}`)
       .set('Accept', 'application/json')
       .expect(200, exp, done);
   });

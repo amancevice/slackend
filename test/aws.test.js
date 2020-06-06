@@ -17,6 +17,7 @@ const MOCK_SECRET = {
 const mockRoute = (req, res, next) => {
   res.locals.slack = {
     topic: 'slack_test_topic',
+    callback_id: 'fizz',
     message: {
       ok:      true,
       team_id: 'T12345678',

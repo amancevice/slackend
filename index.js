@@ -89,6 +89,11 @@ function handleCallback(options = {}) {
       message: req.body,
       type:    'callback',
     };
+    if (req.body.callback_id) {
+      res.locals.slack.callback_id = req.body.callback_id;
+    } else if (req.body.view && req.body.view.callback_id) {
+      res.locals.slack.callback_id = req.body.view.callback_id;
+    }
     next();
   };
 }
