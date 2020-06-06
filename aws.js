@@ -11,6 +11,13 @@ slackend.logger.info.log  = console.log.bind(console);
 slackend.logger.warn.log  = console.log.bind(console);
 slackend.logger.error.log = console.log.bind(console);
 
+function stringMessageAttribute(value) {
+  return {
+    DataType: 'String',
+    StringValue: value.toString(),
+  };
+}
+
 exports = module.exports = (options = {}) => {
   let app            = options.app;
   let server         = options.server;
@@ -69,13 +76,13 @@ exports = module.exports = (options = {}) => {
   function publishOptions(req, res) {
     let attrs = {};
     if (res.locals.slack.type) {
-      attrs.type = {DataType: 'String', StringValue: res.locals.slack.type};
+      attrs.type = stringMessageAttribute(res.locals.slack.type);
     }
     if (res.locals.slack.id) {
-      attrs.id = {DataType: 'String', StringValue: res.locals.slack.id};
+      attrs.id = stringMessageAttribute(res.locals.slack.id);
     }
     if (res.locals.slack.callback_id) {
-      attrs.callback_id = {DataType: 'String', StringValue: res.locals.slack.callback_id};
+      attrs.callback_id = stringMessageAttribute(res.locals.slack.callback_id);
     }
     return {
       Message:  JSON.stringify(res.locals.slack.message),
