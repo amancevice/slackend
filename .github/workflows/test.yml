@@ -2,29 +2,27 @@ name: test
 on:
   pull_request:
   push:
-    branches:
-    - master
   schedule:
-  - cron: "11 21 * * *"
+    - cron: '11 21 * * *'
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version:
-        - 8.x
-        - 10.x
-        - 12.x
-        - 14.x
+          - 8.x
+          - 10.x
+          - 12.x
+          - 14.x
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - uses: amancevice/code-climate-action@v0
-      with:
-        cc_test_reporter_id: ${{ secrets.CC_TEST_REPORTER_ID }}
-    - run: cc-test-reporter before-build
-    - run: npm install
-    - run: npm test
-    - run: cc-test-reporter after-build
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - uses: amancevice/setup-code-climate@v0
+        with:
+          cc_test_reporter_id: ${{ secrets.CC_TEST_REPORTER_ID }}
+      - run: cc-test-reporter before-build
+      - run: npm install
+      - run: npm test
+      - run: cc-test-reporter after-build
