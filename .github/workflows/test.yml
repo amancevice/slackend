@@ -21,19 +21,10 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Set up code climate
-      uses: amancevice/code-climate-action@v0
-      env:
-        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+    - uses: amancevice/code-climate-action@v0
       with:
-        command: before-build
-    - name: Run npm install
-      run: npm install
-    - name: Run npm test
-      run: npm test
-    - name: Send coverage report
-      uses: amancevice/code-climate-action@v0
-      env:
-        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-      with:
-        command: after-build
+        cc_test_reporter_id: ${{ secrets.CC_TEST_REPORTER_ID }}
+    - run: cc-test-reporter before-build
+    - run: npm install
+    - run: npm test
+    - run: cc-test-reporter after-build
