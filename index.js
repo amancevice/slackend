@@ -122,6 +122,11 @@ function handleSlashCmd(options = {}) {
   };
 }
 
+function logSlackMsg(req, res, next) {
+  logger.debug(`SLACK MESSAGE ${JSON.stringify(res.locals.slack)}`);
+  next();
+}
+
 exports = module.exports = (options = {}) => {
 
   // Set defaults
@@ -140,10 +145,10 @@ exports = module.exports = (options = {}) => {
   // Configure routes
   app.use(bodyParser.text({type: '*/*'}));
   app.get('/health', (req, res) => res.json({ok: true}));
-  app.get('/oauth', handleOAuth(options));
-  app.post('/callbacks',  verifyRequest(options), handleCallback(options));
-  app.post('/events',     verifyRequest(options), handleEvent(options));
-  app.post('/slash/:cmd', verifyRequest(options), handleSlashCmd(options));
+  app.get('/oauth', handleOAuth(options), logSlackMsg);
+  app.post('/callbacks',  verifyRequest(options), handleCallback(options), logSlackMsg);
+  app.post('/events',     verifyRequest(options), handleEvent(options), logSlackMsg);
+  app.post('/slash/:cmd', verifyRequest(options), handleSlashCmd(options), logSlackMsg);
 
   // Return routes
   return app;
