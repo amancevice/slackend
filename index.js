@@ -34,7 +34,7 @@ function verifyRequest(options = {}) {
   return (req, res, next) => {
     logger.debug(`HEADERS ${JSON.stringify(req.headers)}`);
     logger.debug(`BODY ${JSON.stringify(req.body)}`);
-    if (process.env.DISABLE_VERIFICATION) {
+    if (options.disable_verification) {
       logger.warn('VERIFICATION DISABLED - ENV');
       next();
     } else if (options.signing_secret === undefined) {
@@ -130,14 +130,15 @@ function logSlackMsg(req, res, next) {
 exports = module.exports = (options = {}) => {
 
   // Set defaults
-  options.client_id          = options.client_id          || process.env.SLACK_CLIENT_ID;
-  options.client_secret      = options.client_secret      || process.env.SLACK_CLIENT_SECRET;
-  options.oauth_error_uri    = options.oauth_error_uri    || process.env.SLACK_OAUTH_ERROR_URI;
-  options.oauth_redirect_uri = options.oauth_redirect_uri || process.env.SLACK_OAUTH_REDIRECT_URI;
-  options.oauth_success_uri  = options.oauth_success_uri  || process.env.SLACK_OAUTH_SUCCESS_URI;
-  options.signing_secret     = options.signing_secret     || process.env.SLACK_SIGNING_SECRET;
-  options.signing_version    = options.signing_version    || process.env.SLACK_SIGNING_VERSION;
-  options.token              = options.token              || process.env.SLACK_TOKEN;
+  options.client_id            = options.client_id            || process.env.SLACK_CLIENT_ID;
+  options.client_secret        = options.client_secret        || process.env.SLACK_CLIENT_SECRET;
+  options.disable_verification = options.disable_verification || process.env.SLACK_DISABLE_VERIFICATION;
+  options.oauth_error_uri      = options.oauth_error_uri      || process.env.SLACK_OAUTH_ERROR_URI;
+  options.oauth_redirect_uri   = options.oauth_redirect_uri   || process.env.SLACK_OAUTH_REDIRECT_URI;
+  options.oauth_success_uri    = options.oauth_success_uri    || process.env.SLACK_OAUTH_SUCCESS_URI;
+  options.signing_secret       = options.signing_secret       || process.env.SLACK_SIGNING_SECRET;
+  options.signing_version      = options.signing_version      || process.env.SLACK_SIGNING_VERSION;
+  options.token                = options.token                || process.env.SLACK_TOKEN;
 
   // Create express router
   const app = express();

@@ -162,14 +162,14 @@ describe('API | Verification', function() {
         type:    'slash',
       },
     };
-    process.env.DISABLE_VERIFICATION = '1';
+    process.env.SLACK_DISABLE_VERIFICATION = '1';
     request(app())
       .post('/slash/fizz')
       .send('fizz=buzz')
       .set('Accept', 'application/json')
       .expect(200, exp)
       .then(() => {
-        delete process.env.DISABLE_VERIFICATION;
+        delete process.env.SLACK_DISABLE_VERIFICATION;
         done();
       })
   });
