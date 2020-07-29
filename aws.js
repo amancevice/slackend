@@ -21,7 +21,7 @@ async function getApp() {
   if (!app) {
     await getEnv();
     app = express();
-    app.use(process.env.BASE_URL || '/', slackend(), publish);
+    app.use(process.env.BASE_PATH || process.env.BASE_URL || '/', slackend(), publish);
   }
   return app;
 }
