@@ -55,10 +55,11 @@ function verifyRequest(options = {}) {
   };
 }
 
-function handleOAuth(options = {}) {
+function handleOAuth(options = {}, version = null) {
   return (req, res, next) => {
     const slack = options.slack || new WebClient(options.token);
-    slack.oauth.access({
+    const oauth = version ? slack.oauth[version] : slack.oauth
+    oauth.access({
       code:          req.query.code,
       client_id:     options.client_id,
       client_secret: options.client_secret,
@@ -146,7 +147,8 @@ exports = module.exports = (options = {}) => {
   // Configure routes
   app.use(bodyParser.text({type: '*/*'}));
   app.get('/health', (req, res) => res.json({ok: true}));
-  app.get('/oauth', handleOAuth(options), logSlackMsg);
+  app.get('/oauth',    handleOAuth(options),       logSlackMsg);
+  app.get('/oauth/v2', handleOAuth(options, 'v2'), logSlackMsg);
   app.post('/callbacks',  verifyRequest(options), handleCallback(options), logSlackMsg);
   app.post('/events',     verifyRequest(options), handleEvent(options), logSlackMsg);
   app.post('/slash/:cmd', verifyRequest(options), handleSlashCmd(options), logSlackMsg);
