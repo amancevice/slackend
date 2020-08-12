@@ -43,10 +43,10 @@ function verifyRequest(options = {}) {
     } else {
       const sign = calculateSignature(req, options);
       if (sign.delta > 60 * 5) {
-        logger.error('Request too old');
+        logger.error('RESPONSE [403] Request too old');
         res.status(403).json({error: 'Request too old'});
       } else if (sign.given !== sign.computed) {
-        logger.error('Signatures do not match');
+        logger.error('RESPONSE [403] Signatures do not match');
         res.status(403).json({error: 'Signatures do not match'});
       } else {
         next();
@@ -74,8 +74,10 @@ function handleOAuth(options = {}, version = null) {
     }).catch((err) => {
       logger.error(err);
       if (options.oauth_error_uri) {
+        logger.warn(`RESPONSE [302] ${options.oauth_error_uri}`);
         res.redirect(options.oauth_error_uri);
       } else {
+        logger.error('RESPONSE [403]');
         res.status(403).json({error: err});
       }
     });
@@ -99,6 +101,7 @@ function handleEvent(options = {}) {
   return (req, res, next) => {
     req.body = JSON.parse(req.body);
     if (req.body.type === 'url_verification') {
+      logger.info(`RESPONSE [200] ${req.body.challenge}`)
       res.json({challenge: req.body.challenge});
     } else {
       res.locals.slack = {
