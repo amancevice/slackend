@@ -84,13 +84,14 @@ function publishOptions(req, res) {
 }
 
 function publishHandler(req, res) {
-  if (req.path === '/oauth') {
+  if (req.path === '/oauth' || req.path === '/oauth/v2') {
     let uri        = process.env.SLACK_OAUTH_SUCCESS_URI       || 'slack://channel?team={TEAM_ID}&id={CHANNEL_ID}',
         channel_id = res.locals.slack.message.incoming_webhook && res.locals.slack.message.incoming_webhook.channel_id,
-        team_id    = res.locals.slack.message.team_id;
+        team_id    = res.locals.slack.message.team && res.locals.slack.message.team.id;
     uri = uri.replace('{TEAM_ID}',    team_id);
     uri = uri.replace('{CHANNEL_ID}', channel_id);
     uri = url.parse(uri, true).format();
+    slackend.logger.info(`RESPONSE [302] ${uri}`);
     res.redirect(uri);
   } else {
     slackend.logger.info(`RESPONSE [204]`);

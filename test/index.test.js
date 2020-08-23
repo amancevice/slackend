@@ -4,8 +4,18 @@ const qs       = require('querystring');
 const request  = require('supertest');
 const slackend = require('../index');
 
-const mockslack     = {oauth: {access: async (options) => { return {token: 'fizz'}; }}};
-const mockslackerr  = {oauth: {access: async (options) => { return Promise.reject('BOOM'); }}};
+const mockslack = {
+  oauth: {
+    access: async (options) => { return {token: 'fizz'}; },
+    v2: { access: async (options) => { return {token: 'fizz'}; }},
+  }
+};
+const mockslackerr = {
+  oauth: {
+    access: async (options) => { return Promise.reject('BOOM'); },
+    v2: { access: async (options) => { return Promise.reject('BOOM'); }},
+  }
+};
 
 const app = (options = {}) => {
   return slackend(Object.assign({
@@ -52,6 +62,36 @@ describe('API | GET /oauth', function() {
   it('Rejects the OAuth workflow', function(done) {
     request(err())
       .get('/oauth?code=buzz')
+      .set('Accept', 'application/json')
+      .expect(403, done);
+  });
+});
+
+describe('API | GET /oauth/v2', function() {
+  it('Completes the OAuth workflow', function(done) {
+    let exp = {
+      slack: {
+        id:      'buzz',
+        message: {token: 'fizz'},
+        type:    'oauth',
+      },
+    };
+    request(app())
+      .get('/oauth/v2?code=buzz')
+      .set('Accept', 'application/json')
+      .expect(200, exp, done);
+  });
+
+  it('Redirects to the OAuth error URI', function(done) {
+    request(err({oauth_error_uri: 'https://example.com/error.html'}))
+      .get('/oauth/v2')
+      .set('Accept', 'application/json')
+      .expect('Location', 'https://example.com/error.html', done);
+  });
+
+  it('Rejects the OAuth workflow', function(done) {
+    request(err())
+      .get('/oauth/v2?code=buzz')
       .set('Accept', 'application/json')
       .expect(403, done);
   });

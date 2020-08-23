@@ -18,11 +18,9 @@ const mockRoute = (req, res, next) => {
     callback_id: 'fizz',
     message: {
       ok:      true,
-      team_id: 'T12345678',
+      team: { id: 'T12345678' },
       callback_id: 'fizz',
-      incoming_webhook: {
-        channel_id: 'C12345678',
-      },
+      incoming_webhook: { channel_id: 'C12345678' },
     },
   };
   next();
@@ -145,10 +143,10 @@ describe('AWS | publish', function() {
     app = express();
     app.use(mockRoute, lambda.publish);
     request(app)
-      .get('/oauth')
+      .get('/oauth/v2')
       .set('Accept', 'application/json')
       .expect('Location', 'slack://channel?team=T12345678&id=C12345678', done);
-  })
+  });
 })
 
 describe('AWS | handler', function() {
