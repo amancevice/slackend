@@ -24,7 +24,7 @@ function calculateSignature(req, options = {}) {
     given:    given,
     computed: computed,
     delta:    delta,
-  }
+  };
   logger.debug(`SIGNING DATA ${data}`);
   logger.debug(`SIGNATURES ${JSON.stringify(res)}`);
   return res;
@@ -58,7 +58,7 @@ function verifyRequest(options = {}) {
 function handleOAuth(options = {}, version = null) {
   return (req, res, next) => {
     const slack = options.slack || new WebClient(options.token);
-    const oauth = version ? slack.oauth[version] : slack.oauth
+    const oauth = version ? slack.oauth[version] : slack.oauth;
     oauth.access({
       code:          req.query.code,
       client_id:     options.client_id,
@@ -101,7 +101,7 @@ function handleEvent(options = {}) {
   return (req, res, next) => {
     req.body = JSON.parse(req.body);
     if (req.body.type === 'url_verification') {
-      logger.info(`RESPONSE [200] ${req.body.challenge}`)
+      logger.info(`RESPONSE [200] ${req.body.challenge}`);
       res.json({challenge: req.body.challenge});
     } else {
       res.locals.slack = {
