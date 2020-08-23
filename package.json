@@ -4,13 +4,13 @@
     "url": "https://github.com/amancevice/slackend/issues"
   },
   "dependencies": {
-    "@slack/web-api": "^5.8.0",
+    "@slack/web-api": "^5.11.0",
     "body-parser": "^1.19.0",
     "express": "^4.17.1"
   },
   "description": "Simple asynchronous back end for Slack apps",
   "devDependencies": {
-    "aws-sdk": "^2.656.0",
+    "aws-sdk": "^2.738.0",
     "aws-serverless-express": "^3.3.8",
     "dotenv": "^8.2.0",
     "mocha": "^7.1.1",
