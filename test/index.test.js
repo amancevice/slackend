@@ -29,6 +29,14 @@ const err = (options = {}) => {
   }, options)).use((req, res) => res.json(res.locals));
 };
 
+describe('API | GET /install', function() {
+  it('Responds with 302', function(done) {
+    request(app())
+      .get('/install')
+      .expect('Location', 'https://slack.com/oauth/v2/authorize', done);
+  });
+})
+
 describe('API | GET /health', function() {
   it('Responds OK', function(done) {
     request(app())

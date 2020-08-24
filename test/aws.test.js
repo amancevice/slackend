@@ -6,6 +6,7 @@ const slackend = require('../aws');
 const MOCK_SECRET = {
   SLACK_CLIENT_ID:          '123456789012.123456789012',
   SLACK_CLIENT_SECRET:      '1234567890abcdef1234567890abcdef',
+  SLACK_OAUTH_INSTALL_URI:  'https://slack.com/oauth/v2/authorize',
   SLACK_OAUTH_REDIRECT_URI: 'http://localhost:3000/oauth/callback',
   SLACK_OAUTH_SUCCESS_URI:  'slack://channel?team={TEAM_ID}&id={CHANNEL_ID}',
   SLACK_SIGNING_VERSION:    'v0',

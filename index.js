@@ -55,6 +55,13 @@ function verifyRequest(options = {}) {
   };
 }
 
+function handleInstall(options = {}) {
+  return (req, res) => {
+    logger.info(`RESPONSE [302] ${options.oauth_install_uri}`);
+    res.redirect(options.oauth_install_uri);
+  };
+}
+
 function handleOAuth(options = {}, version = null) {
   return (req, res, next) => {
     const slack = options.slack || new WebClient(options.token);
@@ -137,6 +144,7 @@ exports = module.exports = (options = {}) => {
   options.client_id            = options.client_id            || process.env.SLACK_CLIENT_ID;
   options.client_secret        = options.client_secret        || process.env.SLACK_CLIENT_SECRET;
   options.disable_verification = options.disable_verification || process.env.SLACK_DISABLE_VERIFICATION;
+  options.oauth_install_uri    = options.oauth_install_uri    || process.env.SLACK_OAUTH_INSTALL_URI;
   options.oauth_error_uri      = options.oauth_error_uri      || process.env.SLACK_OAUTH_ERROR_URI;
   options.oauth_redirect_uri   = options.oauth_redirect_uri   || process.env.SLACK_OAUTH_REDIRECT_URI;
   options.oauth_success_uri    = options.oauth_success_uri    || process.env.SLACK_OAUTH_SUCCESS_URI;
@@ -150,10 +158,11 @@ exports = module.exports = (options = {}) => {
   // Configure routes
   app.use(bodyParser.text({type: '*/*'}));
   app.get('/health', (req, res) => res.json({ok: true}));
+  app.get('/install',  handleInstall(options));
   app.get('/oauth',    handleOAuth(options),       logSlackMsg);
   app.get('/oauth/v2', handleOAuth(options, 'v2'), logSlackMsg);
   app.post('/callbacks',  verifyRequest(options), handleCallback(options), logSlackMsg);
-  app.post('/events',     verifyRequest(options), handleEvent(options), logSlackMsg);
+  app.post('/events',     verifyRequest(options), handleEvent(options),    logSlackMsg);
   app.post('/slash/:cmd', verifyRequest(options), handleSlashCmd(options), logSlackMsg);
 
   // Return routes
