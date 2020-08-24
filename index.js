@@ -64,30 +64,40 @@ function handleInstall(options = {}) {
 
 function handleOAuth(options = {}, version = null) {
   return (req, res, next) => {
-    const slack = options.slack || new WebClient(options.token);
-    const oauth = version ? slack.oauth[version] : slack.oauth;
-    oauth.access({
-      code:          req.query.code,
-      client_id:     options.client_id,
-      client_secret: options.client_secret,
-      redirect_uri:  options.redirect_uri,
-    }).then((ret) => {
-      res.locals.slack = {
-        id:      req.query.code,
-        message: ret,
-        type:    'oauth',
-      };
-      next();
-    }).catch((err) => {
-      logger.error(err);
-      if (options.oauth_error_uri) {
-        logger.warn(`RESPONSE [302] ${options.oauth_error_uri}`);
-        res.redirect(options.oauth_error_uri);
-      } else {
-        logger.error('RESPONSE [403]');
-        res.status(403).json({error: err});
-      }
-    });
+    // Handle denials
+    if (req.query.error) {
+      logger.error(req.query.error);
+      logger.warn(`RESPONSE [302] ${options.oauth_error_uri}`);
+      res.redirect(options.oauth_error_uri);
+    }
+
+    // Handle OAuth
+    else {
+      const slack = options.slack || new WebClient(options.token);
+      const oauth = version ? slack.oauth[version] : slack.oauth;
+      oauth.access({
+        code:          req.query.code,
+        client_id:     options.client_id,
+        client_secret: options.client_secret,
+        redirect_uri:  options.redirect_uri,
+      }).then((ret) => {
+        res.locals.slack = {
+          id:      req.query.code,
+          message: ret,
+          type:    'oauth',
+        };
+        next();
+      }).catch((err) => {
+        logger.error(err);
+        if (options.oauth_error_uri) {
+          logger.warn(`RESPONSE [302] ${options.oauth_error_uri}`);
+          res.redirect(options.oauth_error_uri);
+        } else {
+          logger.error('RESPONSE [403]');
+          res.status(403).json({error: err});
+        }
+      });
+    }
   };
 }
 

@@ -97,6 +97,13 @@ describe('API | GET /oauth/v2', function() {
       .expect('Location', 'https://example.com/error.html', done);
   });
 
+  it('Redirects to the OAuth error URI', function(done) {
+    request(app({oauth_error_uri: 'https://example.com/error.html'}))
+      .get('/oauth/v2?error=fizz')
+      .set('Accept', 'application/json')
+      .expect('Location', 'https://example.com/error.html', done);
+  });
+
   it('Rejects the OAuth workflow', function(done) {
     request(err())
       .get('/oauth/v2?code=buzz')
