@@ -1,5 +1,5 @@
 'use strict';
-const awsServerlessExpress = require('aws-serverless-express');
+const serverlessExpress    = require('@vendia/serverless-express');
 const express              = require('express');
 const slackend             = require('./index');
 const url                  = require('url');
@@ -33,7 +33,7 @@ async function getEnv() {
 
 async function getServer() {
   if (!server) {
-    server = awsServerlessExpress.createServer(await getApp());
+    server = serverlessExpress.createServer(await getApp());
   }
   return server;
 }
@@ -49,7 +49,7 @@ async function getSlack() {
 async function handler(event, context) {
   slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
   await getServer();
-  return await awsServerlessExpress.proxy(server, event, context, 'PROMISE').promise;
+  return await serverlessExpress.proxy(server, event, context, 'PROMISE').promise;
 }
 
 function post(method) {

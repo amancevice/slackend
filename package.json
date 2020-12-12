@@ -10,8 +10,8 @@
   },
   "description": "Simple asynchronous back end for Slack apps",
   "devDependencies": {
+    "@vendia/serverless-express": "^3.4.0",
     "aws-sdk": "^2.738.0",
-    "aws-serverless-express": "^3.3.8",
     "dotenv": "^8.2.0",
     "mocha": "^7.1.1",
     "nyc": "^15.0.1",
