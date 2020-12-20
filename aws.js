@@ -1,16 +1,12 @@
 'use strict';
-const serverlessExpress    = require('@vendia/serverless-express');
+const serverless           = require('serverless-http');
 const express              = require('express');
 const slackend             = require('./index');
 const url                  = require('url');
 const {SecretsManager,SNS} = require('aws-sdk');
 const {WebClient}          = require('@slack/web-api');
 
-let app,
-    server,
-    slack,
-    secretsmanager,
-    sns;
+let app, slack, secretsmanager, sns;
 
 slackend.logger.debug.log = console.log.bind(console);
 slackend.logger.info.log  = console.log.bind(console);
@@ -31,13 +27,6 @@ async function getEnv() {
   return Object.assign(process.env, JSON.parse(secret.SecretString));
 }
 
-async function getServer() {
-  if (!server) {
-    server = serverlessExpress.createServer(await getApp());
-  }
-  return server;
-}
-
 async function getSlack() {
   if (!slack) {
     await getEnv();
@@ -48,8 +37,11 @@ async function getSlack() {
 
 async function handler(event, context) {
   slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
-  await getServer();
-  return await serverlessExpress.proxy(server, event, context, 'PROMISE').promise;
+  const app = await getApp();
+  const handle = serverless(app);
+  const res = await handle(event, context);
+  slackend.logger.info(`RESPONSE [${res.statusCode}] ${res.body}`);
+  return res;
 }
 
 function post(method) {
@@ -117,9 +109,8 @@ function stringMessageAttribute(value) {
   };
 }
 
-exports = module.exports = (options = {}) => {
+module.exports = (options = {}) => {
   app            = options.app;
-  server         = options.server;
   slack          = options.slack;
   secretsmanager = options.secretsmanager || new SecretsManager();
   sns            = options.sns || new SNS();
@@ -127,7 +118,6 @@ exports = module.exports = (options = {}) => {
   return {
     getApp:        getApp,
     getEnv:        getEnv,
-    getServer:     getServer,
     getSlack:      getSlack,
     handler:       handler,
     postEphemeral: post('postEphemeral'),
@@ -135,4 +125,4 @@ exports = module.exports = (options = {}) => {
     publish:       publish,
   }
 };
-exports.logger = slackend.logger;
+module.exports.logger = slackend.logger;

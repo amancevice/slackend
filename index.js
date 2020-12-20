@@ -148,7 +148,7 @@ function logSlackMsg(req, res, next) {
   next();
 }
 
-exports = module.exports = (options = {}) => {
+const app = (options = {}) => {
 
   // Set defaults
   options.client_id            = options.client_id            || process.env.SLACK_CLIENT_ID;
@@ -179,4 +179,6 @@ exports = module.exports = (options = {}) => {
   return app;
 
 };
-exports.logger = logger;
+
+module.exports = app;
+module.exports.logger = logger;

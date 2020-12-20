@@ -80,15 +80,6 @@ describe('AWS | getEnv', function() {
   });
 });
 
-describe('AWS | getServer', function() {
-  before(() => { lambda = slackend({secretsmanager: mockSecretsManager}); });
-
-  it('Creates the server', async function() {
-    const server = await lambda.getServer();
-    assert.ok(server);
-  });
-});
-
 describe('AWS | getSlack', function() {
   before(() => { lambda = slackend({secretsmanager: mockSecretsManager}); });
 
@@ -151,8 +142,6 @@ describe('AWS | publish', function() {
 })
 
 describe('AWS | handler', function() {
-  afterEach(() => { lambda.getServer().then((server) => server.close()) });
-
   it('Succeeds with 204', async function() {
     lambda = slackend({secretsmanager: mockSecretsManager, sns: mockSns});
     const event   = {path: '/slash/fizz', httpMethod: 'POST', body: 'fizz=buzz'};
