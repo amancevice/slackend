@@ -105,11 +105,18 @@ function handleCallback(options = {}) {
   return (req, res, next) => {
     req.body = JSON.parse(qs.parse(req.body).payload);
     res.locals.slack = {
-      callback_id: req.body.callback_id || (req.body.view && req.body.view.callback_id),
       id:          req.body.type,
       message:     req.body,
       type:        'callback',
     };
+    if (req.body.type === 'view_submission') {
+      res.locals.slack.callback_id = req.body.view.callback_id;
+    } else if (req.body.type === 'block_actions') {
+      res.locals.slack.action_ids = req.body.actions.map((x) => x.action_id);
+    } else {
+      res.locals.slack.callback_id = req.body.callback_id;
+    }
+
     next();
   };
 }

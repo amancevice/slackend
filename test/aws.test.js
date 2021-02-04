@@ -1,5 +1,6 @@
 const assert   = require('assert');
 const express  = require('express');
+const qs       = require('querystring');
 const request  = require('supertest');
 const slackend = require('../aws');
 
@@ -55,6 +56,25 @@ const mockSlack = {
   chat: {
     postMessage:   (options) => Promise.resolve(Object.assign(options, {type: 'in_channel'})),
     postEphemeral: (options) => Promise.resolve(Object.assign(options, {type: 'ephemeral'})),
+  },
+};
+
+const blockActions = {
+  type: 'block_actions',
+  actions: [
+    {
+      action_id: 'my_action',
+    },
+  ],
+};
+const callback = {
+  type: 'callback',
+  callback_id: 'my_callback'
+};
+const viewSubmission = {
+  type: 'view_submission',
+  view: {
+    callback_id: 'my_callback',
   },
 };
 
@@ -149,7 +169,38 @@ describe('AWS | handler', function() {
     const res     = await lambda.handler(event, context);
     assert.equal(res.statusCode, 204);
     assert.equal(res.body, '');
+  });
 
+  it('Succeeds with 204 (block_actions)', async function() {
+    lambda = slackend({secretsmanager: mockSecretsManager, sns: mockSns});
+    const event = {
+      path: '/callbacks',
+      httpMethod: 'POST',
+      body: `payload=${qs.escape(JSON.stringify(blockActions))}`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+    };
+    const context = {succeed: () => {}};
+    const res     = await lambda.handler(event, context);
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, '');
+  });
+
+  it('Succeeds with 204 (view_submission)', async function() {
+    lambda = slackend({secretsmanager: mockSecretsManager, sns: mockSns});
+    const event = {
+      path: '/callbacks',
+      httpMethod: 'POST',
+      body: `payload=${qs.escape(JSON.stringify(viewSubmission))}`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+    };
+    const context = {succeed: () => {}};
+    const res     = await lambda.handler(event, context);
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, '');
   });
 
   it('Fails with 400', async function() {

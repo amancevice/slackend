@@ -68,6 +68,9 @@ function publishOptions(req, res) {
   if (res.locals.slack.callback_id) {
     attrs.callback_id = stringMessageAttribute(res.locals.slack.callback_id);
   }
+  if (res.locals.slack.action_ids) {
+    attrs.action_ids = stringArrayMessageAttribute(res.locals.slack.action_ids);
+  }
   return {
     Message:  JSON.stringify(res.locals.slack.message),
     TopicArn: process.env.AWS_SNS_TOPIC_ARN,
@@ -107,6 +110,13 @@ function stringMessageAttribute(value) {
     DataType:    'String',
     StringValue: `${value}`,
   };
+}
+
+function stringArrayMessageAttribute(value) {
+  return {
+    DataType: 'String.Array',
+    StringValue: JSON.stringify(value),
+  }
 }
 
 module.exports = (options = {}) => {

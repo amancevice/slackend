@@ -29,6 +29,25 @@ const err = (options = {}) => {
   }, options)).use((req, res) => res.json(res.locals));
 };
 
+const blockActions = {
+  type: 'block_actions',
+  actions: [
+    {
+      action_id: 'my_action',
+    },
+  ],
+};
+const callback = {
+  type: 'callback',
+  callback_id: 'my_callback'
+};
+const viewSubmission = {
+  type: 'view_submission',
+  view: {
+    callback_id: 'my_callback',
+  },
+};
+
 describe('API | GET /install', function() {
   it('Responds with 302', function(done) {
     request(app())
@@ -114,35 +133,51 @@ describe('API | GET /oauth/v2', function() {
 
 describe('API | POST /callbacks', function() {
   it('Responds with message and topic', function(done) {
-    let msg = {type: 'block_actions', callback_id: 'callback_1'};
     let exp = {
       slack: {
-        id:          'block_actions',
-        callback_id: 'callback_1',
-        message:     msg,
+        id:          'callback',
+        callback_id: 'my_callback',
+        message:     callback,
         type:        'callback',
       },
     };
     request(app())
       .post('/callbacks')
-      .send(`payload=${qs.escape(JSON.stringify(msg))}`)
+      .send(`payload=${qs.escape(JSON.stringify(callback))}`)
+      .set('Accept', 'application/json')
+      .expect(200, exp, done);
+  });
+
+  it('Responds with message and topic (block_actions)', function(done) {
+    let exp = {
+      slack: {
+        id:      'block_actions',
+        message: blockActions,
+        type:    'callback',
+        action_ids: [
+          'my_action',
+        ],
+      },
+    };
+    request(app())
+      .post('/callbacks')
+      .send(`payload=${qs.escape(JSON.stringify(blockActions))}`)
       .set('Accept', 'application/json')
       .expect(200, exp, done);
   });
 
   it('Responds with message and topic (view)', function(done) {
-    let msg = {type: 'block_actions', view: {callback_id: 'callback_1'}};
     let exp = {
       slack: {
-        id:          'block_actions',
-        callback_id: 'callback_1',
-        message:     msg,
+        id:          'view_submission',
+        callback_id: 'my_callback',
+        message:     viewSubmission,
         type:        'callback',
       },
     };
     request(app())
       .post('/callbacks')
-      .send(`payload=${qs.escape(JSON.stringify(msg))}`)
+      .send(`payload=${qs.escape(JSON.stringify(viewSubmission))}`)
       .set('Accept', 'application/json')
       .expect(200, exp, done);
   });
@@ -194,7 +229,7 @@ describe('API | Verification', function() {
   it('Errors with bad signature', function(done) {
     request(err())
       .post('/callbacks')
-      .send('payload=%7B%22type%22%3A%22block_actions%22%7D')
+      .send(`payload=${qs.escape(JSON.stringify(blockActions))}`)
       .set('Accept', 'application/json')
       .expect(403, {error: 'Signatures do not match'}, done);
   });
@@ -202,7 +237,7 @@ describe('API | Verification', function() {
   it('Errors with bad timestamp', function(done) {
     request(err())
       .post('/callbacks')
-      .send('payload=%7B%22type%22%3A%22block_actions%22%7D')
+      .send(`payload=${qs.escape(JSON.stringify(blockActions))}`)
       .set('Accept', 'application/json')
       .set('x-slack-request-timestamp', '0')
       .set('x-slack-signature', 'v0=c340868077bc902f57e4f721a98a957880c7365bea1bb1a9e6fad1a5ebc8ce9c')
@@ -232,18 +267,21 @@ describe('API | Verification', function() {
   it('Verifies the request', function(done) {
     let ts   = new Date() / 1000;
     let hmac = crypto.createHmac('sha256', 'fake');
-    let data = `v0:${ts}:payload=%7B%22type%22%3A%22block_actions%22%7D`;
+    let data = `v0:${ts}:payload=${qs.escape(JSON.stringify(blockActions))}`;
     let sig  = `v0=${hmac.update(data).digest('hex')}`;
     let exp  = {
       slack: {
         id:      'block_actions',
-        message: {type: 'block_actions'},
+        message: blockActions,
         type:    'callback',
+        action_ids: [
+          'my_action',
+        ],
       },
     };
     request(err())
       .post('/callbacks')
-      .send('payload=%7B%22type%22%3A%22block_actions%22%7D')
+      .send(`payload=${qs.escape(JSON.stringify(blockActions))}`)
       .set('Accept', 'application/json')
       .set('x-slack-request-timestamp', `${ts}`)
       .set('x-slack-signature', sig)
