@@ -16,8 +16,8 @@ let app, slack, secretsmanager, sns;
 
 // Lambda logger
 const awslogger = (lvl) => (msg) => {
-  if (this.context && this.context.aws_request_id) {
-    process.stdout.write(`${lvl} RequestId: ${this.context.aws_request_id} ${msg}\n`);
+  if (this.context && this.context.awsRequestId) {
+    process.stdout.write(`${lvl} RequestId: ${this.context.awsRequestId} ${msg}\n`);
   } else {
     process.stdout.write(`${lvl} - ${msg}\n`);
   }
