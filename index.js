@@ -11,10 +11,10 @@ const express     = require('express');
 const {WebClient} = require('@slack/web-api');
 
 const logger = {
-  debug: debug('slackend:debug'),
-  info:  debug('slackend:info'),
-  warn:  debug('slackend:warn'),
-  error: debug('slackend:error'),
+  debug: debug(process.env.SLACKEND_DEBUG || 'slackend:debug'),
+  info:  debug(process.env.SLACKEND_INFO  || 'slackend:info'),
+  warn:  debug(process.env.SLACKEND_WARN  || 'slackend:warn'),
+  error: debug(process.env.SLACKEND_ERROR || 'slackend:error'),
 };
 
 function calculateSignature(req, options = {}) {

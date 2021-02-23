@@ -4,8 +4,9 @@
 const url = require('url');
 
 // node_modules
-const serverless           = require('serverless-http');
+const debug                = require('debug');
 const express              = require('express');
+const serverless           = require('serverless-http');
 const {SecretsManager,SNS} = require('aws-sdk');
 const {WebClient}          = require('@slack/web-api');
 
@@ -15,22 +16,23 @@ const slackend = require('./index');
 let app, slack, secretsmanager, sns;
 
 // Lambda logger
-const awslogger = (lvl) => (msg) => {
-  if (this.context && this.context.awsRequestId) {
-    process.stdout.write(`${lvl} RequestId: ${this.context.awsRequestId} ${msg}\n`);
+slackend.logger.addContext = (context) => {
+  let reqid;
+  if (context && context.awsRequestId) {
+    reqid = `RequestId: ${context.awsRequestId}`;
   } else {
-    process.stdout.write(`${lvl} - ${msg}\n`);
+    reqid = '-';
   }
+  ['debug', 'info', 'warn', 'error'].map((lvl) => {
+    slackend.logger[lvl].original_namespace = slackend.logger[lvl].namespace;
+    slackend.logger[lvl].namespace += ` ${reqid}`;
+  });
 };
-
-slackend.logger = {
-  debug: awslogger('DEBUG').bind(this),
-  info: awslogger('INFO').bind(this),
-  warn: awslogger('WARN').bind(this),
-  error: awslogger('ERROR').bind(this),
-  addContext: (context) => { this.context = context; },
-  dropContext: () => { this.context = undefined; },
-};
+slackend.logger.dropContext = () => {
+  ['debug', 'info', 'warn', 'error'].map((lvl) => {
+    slackend.logger[lvl].namespace = slackend.logger[lvl].original_namespace;
+  });
+}
 
 async function getApp() {
   if (!app) {
