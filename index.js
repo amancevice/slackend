@@ -1,9 +1,13 @@
 'use strict';
+
+// stdlib
+const crypto = require('crypto');
+const qs     = require('querystring');
+
+// node_modules
 const bodyParser  = require('body-parser');
 const debug       = require('debug');
-const crypto      = require('crypto');
 const express     = require('express');
-const qs          = require('querystring');
 const {WebClient} = require('@slack/web-api');
 
 const logger = {

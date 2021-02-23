@@ -165,7 +165,7 @@ describe('AWS | handler', function() {
   it('Succeeds with 204', async function() {
     lambda = slackend({secretsmanager: mockSecretsManager, sns: mockSns});
     const event   = {path: '/slash/fizz', httpMethod: 'POST', body: 'fizz=buzz'};
-    const context = {succeed: () => {}};
+    const context = {aws_request_id: 'awsRequestId', succeed: () => {}};
     const res     = await lambda.handler(event, context);
     assert.equal(res.statusCode, 204);
     assert.equal(res.body, '');
@@ -181,7 +181,7 @@ describe('AWS | handler', function() {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
     };
-    const context = {succeed: () => {}};
+    const context = {aws_request_id: 'awsRequestId', succeed: () => {}};
     const res     = await lambda.handler(event, context);
     assert.equal(res.statusCode, 204);
     assert.equal(res.body, '');
@@ -197,7 +197,7 @@ describe('AWS | handler', function() {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
     };
-    const context = {succeed: () => {}};
+    const context = {aws_request_id: 'awsRequestId', succeed: () => {}};
     const res     = await lambda.handler(event, context);
     assert.equal(res.statusCode, 204);
     assert.equal(res.body, '');
@@ -206,7 +206,7 @@ describe('AWS | handler', function() {
   it('Fails with 400', async function() {
     lambda = slackend({secretsmanager: mockSecretsManager, sns: mockSnsFail});
     const event   = {path: '/slash/fizz', httpMethod: 'POST', body: 'fizz=buzz'};
-    const context = {succeed: () => {}};
+    const context = {aws_request_id: 'awsRequestId', succeed: () => {}};
     const res     = await lambda.handler(event, context);
     assert.equal(res.statusCode, 400);
     assert.equal(res.body, 'SNS ERROR!');

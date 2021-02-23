@@ -1,17 +1,36 @@
 'use strict';
+
+// stdlib
+const url = require('url');
+
+// node_modules
 const serverless           = require('serverless-http');
 const express              = require('express');
-const slackend             = require('./index');
-const url                  = require('url');
 const {SecretsManager,SNS} = require('aws-sdk');
 const {WebClient}          = require('@slack/web-api');
 
+// local
+const slackend = require('./index');
+
 let app, slack, secretsmanager, sns;
 
-slackend.logger.debug.log = console.log.bind(console);
-slackend.logger.info.log  = console.log.bind(console);
-slackend.logger.warn.log  = console.log.bind(console);
-slackend.logger.error.log = console.log.bind(console);
+// Lambda logger
+const awslogger = (lvl) => (msg) => {
+  if (this.context && this.context.aws_request_id) {
+    process.stdout.write(`${lvl} RequestId: ${this.context.aws_request_id} ${msg}\n`);
+  } else {
+    process.stdout.write(`${lvl} - ${msg}\n`);
+  }
+};
+
+slackend.logger = {
+  debug: awslogger('DEBUG').bind(this),
+  info: awslogger('INFO').bind(this),
+  warn: awslogger('WARN').bind(this),
+  error: awslogger('ERROR').bind(this),
+  addContext: (context) => { this.context = context; },
+  dropContext: () => { this.context = undefined; },
+};
 
 async function getApp() {
   if (!app) {
@@ -36,24 +55,29 @@ async function getSlack() {
 }
 
 async function handler(event, context) {
+  slackend.logger.addContext(context);
   slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
   const app = await getApp();
   const handle = serverless(app);
   const res = await handle(event, context);
   slackend.logger.info(`RESPONSE [${res.statusCode}] ${res.body}`);
+  slackend.logger.dropContext();
   return res;
 }
 
 function post(method) {
-  return async (event) => {
+  return async (event, context) => {
+    slackend.logger.addContext(context);
     slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
     await getSlack();
     const func = slack.chat[method];
     const msgs = event.Records.map((rec) => JSON.parse(rec.Sns.Message));
-    return await Promise.all(msgs.map((msg) => {
+    const res = await Promise.all(msgs.map((msg) => {
       slackend.logger.info(`slack.chat.${method} ${JSON.stringify(msg)}`);
       return func(msg);
     }));
+    slackend.logger.dropContext();
+    return res;
   };
 }
 
@@ -89,7 +113,7 @@ function publishHandler(req, res) {
     slackend.logger.info(`RESPONSE [302] ${uri}`);
     res.redirect(uri);
   } else {
-    slackend.logger.info(`RESPONSE [204]`);
+    //slackend.logger.info(`RESPONSE [204]`);
     res.status(204).send();
   }
 }
@@ -100,7 +124,7 @@ function publish(req, res) {
   return sns.publish(options).promise()
     .then(() => publishHandler(req, res))
     .catch((err) => {
-      slackend.logger.warn(`RESPONSE [400] ${JSON.stringify(err)}`);
+      //slackend.logger.warn(`RESPONSE [400] ${JSON.stringify(err)}`);
       res.status(400).send(err);
     });
 }
