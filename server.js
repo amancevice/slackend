@@ -33,7 +33,7 @@ const log = () => {
 
   console.log(`# Slash command`);
   console.log(`curl --request POST \\`);
-  console.log(`  --data '${slash}' \\`);
+  console.log(`  --data '${JSON.stringify(slash)}' \\`);
   console.log(`  --url 'http://${HOST}:${PORT}${BASE_URL}slash/fizz' | jq\n`);
 };
 app.use(BASE_URL, api, pub);
