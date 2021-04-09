@@ -31,28 +31,19 @@ function calculateSignature(req, options = {}) {
   return res;
 }
 
-function verifyRequest(options = {}) {
-  return (req, res, next) => {
-    logger.debug(`HEADERS ${JSON.stringify(req.headers)}`);
-    logger.debug(`BODY ${JSON.stringify(req.body)}`);
-    if (options.disable_verification) {
-      logger.warn("VERIFICATION DISABLED - ENV");
-      next();
-    } else if (options.signing_secret === undefined) {
-      logger.warn("VERIFICATION DISABLED - NO SIGNING SECRET");
-      next();
-    } else {
-      const sign = calculateSignature(req, options);
-      if (sign.delta > 60 * 5) {
-        logger.error("RESPONSE [403] Request too old");
-        res.status(403).json({ error: "Request too old" });
-      } else if (sign.given !== sign.computed) {
-        logger.error("RESPONSE [403] Signatures do not match");
-        res.status(403).json({ error: "Signatures do not match" });
-      } else {
-        next();
-      }
-    }
+function getOptions(options = {}) {
+  return {
+    client_id: process.env.SLACK_CLIENT_ID,
+    client_secret: process.env.SLACK_CLIENT_SECRET,
+    disable_verification: process.env.SLACK_DISABLE_VERIFICATION,
+    oauth_install_uri: process.env.SLACK_OAUTH_INSTALL_URI,
+    oauth_error_uri: process.env.SLACK_OAUTH_ERROR_URI,
+    oauth_redirect_uri: process.env.SLACK_OAUTH_REDIRECT_URI,
+    oauth_success_uri: process.env.SLACK_OAUTH_SUCCESS_URI,
+    signing_secret: process.env.SLACK_SIGNING_SECRET,
+    signing_version: process.env.SLACK_SIGNING_VERSION,
+    token: process.env.SLACK_TOKEN,
+    ...options,
   };
 }
 
@@ -132,21 +123,34 @@ function logSlackMsg(req, res, next) {
   next();
 }
 
+function verifyRequest(options = {}) {
+  return (req, res, next) => {
+    logger.debug(`HEADERS ${JSON.stringify(req.headers)}`);
+    logger.debug(`BODY ${JSON.stringify(req.body)}`);
+    if (options.disable_verification) {
+      logger.warn("VERIFICATION DISABLED - ENV");
+      next();
+    } else if (options.signing_secret === undefined) {
+      logger.warn("VERIFICATION DISABLED - NO SIGNING SECRET");
+      next();
+    } else {
+      const sign = calculateSignature(req, options);
+      if (sign.delta > 60 * 5) {
+        logger.error("RESPONSE [403] Request too old");
+        res.status(403).json({ error: "Request too old" });
+      } else if (sign.given !== sign.computed) {
+        logger.error("RESPONSE [403] Signatures do not match");
+        res.status(403).json({ error: "Signatures do not match" });
+      } else {
+        next();
+      }
+    }
+  };
+}
+
 const app = (options = {}) => {
   // Set opts with defaults
-  const opts = {
-    client_id: process.env.SLACK_CLIENT_ID,
-    client_secret: process.env.SLACK_CLIENT_SECRET,
-    disable_verification: process.env.SLACK_DISABLE_VERIFICATION,
-    oauth_install_uri: process.env.SLACK_OAUTH_INSTALL_URI,
-    oauth_error_uri: process.env.SLACK_OAUTH_ERROR_URI,
-    oauth_redirect_uri: process.env.SLACK_OAUTH_REDIRECT_URI,
-    oauth_success_uri: process.env.SLACK_OAUTH_SUCCESS_URI,
-    signing_secret: process.env.SLACK_SIGNING_SECRET,
-    signing_version: process.env.SLACK_SIGNING_VERSION,
-    token: process.env.SLACK_TOKEN,
-    ...options,
-  };
+  const opts = getOptions(options);
 
   // Create express router & callbacks
   const app = express(),
