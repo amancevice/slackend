@@ -11,17 +11,7 @@ const app = express();
 const api = slackend();
 const pub = (req, res) => {
   console.log(`\n${req.method} ${req.path}`);
-  if (res.locals.slack.callback_id) {
-    console.log(`├── type:        ${res.locals.slack.type}`);
-    console.log(`├── id:          ${res.locals.slack.id}`);
-    console.log(`├── callback_id: ${res.locals.slack.callback_id}`);
-    console.log(`└── message:     ${JSON.stringify(res.locals.slack.message)}\n`);
-  } else {
-    console.log(`├── type:    ${res.locals.slack.type}`);
-    console.log(`├── id:      ${res.locals.slack.id}`);
-    console.log(`└── message: ${JSON.stringify(res.locals.slack.message)}\n`);
-  }
-  res.json(res.locals.slack);
+  res.json(req.body);
 };
 const log = () => {
   console.log(`> Listening on ${HOST}:${PORT}${BASE_URL}\n`);

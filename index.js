@@ -21,23 +21,23 @@ function calculateSignature(req, options = {}) {
   const ts       = req.headers['x-slack-request-timestamp'];
   const given    = req.headers['x-slack-signature'];
   const hmac     = crypto.createHmac('sha256', options.signing_secret);
-  const data     = `${options.signing_version}:${ts}:${req.body}`;
-  const computed = `${options.signing_version}=${hmac.update(data).digest('hex')}`;
+  const data     = `${ options.signing_version }:${ ts }:${ req.body }`;
+  const computed = `${ options.signing_version }=${ hmac.update(data).digest('hex') }`;
   const delta    = Math.abs(new Date() / 1000 - ts);
   const res      = {
     given:    given,
     computed: computed,
     delta:    delta,
   };
-  logger.debug(`SIGNING DATA ${data}`);
-  logger.debug(`SIGNATURES ${JSON.stringify(res)}`);
+  logger.debug(`SIGNING DATA ${ data }`);
+  logger.debug(`SIGNATURES ${ JSON.stringify(res) }`);
   return res;
 }
 
 function verifyRequest(options = {}) {
   return (req, res, next) => {
-    logger.debug(`HEADERS ${JSON.stringify(req.headers)}`);
-    logger.debug(`BODY ${JSON.stringify(req.body)}`);
+    logger.debug(`HEADERS ${ JSON.stringify(req.headers) }`);
+    logger.debug(`BODY ${ JSON.stringify(req.body) }`);
     if (options.disable_verification) {
       logger.warn('VERIFICATION DISABLED - ENV');
       next();
@@ -85,11 +85,7 @@ function handleOAuth(options = {}, version = null) {
         client_secret: options.client_secret,
         redirect_uri:  options.redirect_uri,
       }).then((ret) => {
-        res.locals.slack = {
-          id:      req.query.code,
-          message: ret,
-          type:    'oauth',
-        };
+        res.locals.slack = ret;
         next();
       }).catch((err) => {
         logger.error(err);
@@ -107,36 +103,18 @@ function handleOAuth(options = {}, version = null) {
 
 function handleCallback(options = {}) {
   return (req, res, next) => {
-    req.body = JSON.parse(qs.parse(req.body).payload);
-    res.locals.slack = {
-      id:          req.body.type,
-      message:     req.body,
-      type:        'callback',
-    };
-    if (req.body.type === 'view_submission') {
-      res.locals.slack.callback_id = req.body.view.callback_id;
-    } else if (req.body.type === 'block_actions') {
-      res.locals.slack.action_ids = req.body.actions.map((x) => x.action_id);
-    } else {
-      res.locals.slack.callback_id = req.body.callback_id;
-    }
-
+    res.locals.slack = JSON.parse(qs.parse(req.body).payload);
     next();
   };
 }
 
 function handleEvent(options = {}) {
   return (req, res, next) => {
-    req.body = JSON.parse(req.body);
-    if (req.body.type === 'url_verification') {
-      logger.info(`RESPONSE [200] ${req.body.challenge}`);
-      res.json({challenge: req.body.challenge});
+    res.locals.slack = JSON.parse(req.body);
+    if (res.locals.slack.type === 'url_verification') {
+      logger.info(`RESPONSE [200] ${ res.locals.slack.challenge }`);
+      res.json({challenge: res.locals.slack.challenge});
     } else {
-      res.locals.slack = {
-        id:      req.body.event.type,
-        message: req.body,
-        type:    'event',
-      };
       next();
     }
   };
@@ -144,18 +122,13 @@ function handleEvent(options = {}) {
 
 function handleSlashCmd(options = {}) {
   return (req, res, next) => {
-    req.body = qs.parse(req.body);
-    res.locals.slack = {
-      id:      req.params.cmd,
-      message: req.body,
-      type:    'slash'
-    };
+    res.locals.slack = qs.parse(req.body);
     next();
   };
 }
 
 function logSlackMsg(req, res, next) {
-  logger.debug(`SLACK MESSAGE ${JSON.stringify(res.locals.slack)}`);
+  logger.debug(`SLACK MESSAGE ${ JSON.stringify(res.locals.slack) }`);
   next();
 }
 

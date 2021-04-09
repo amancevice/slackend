@@ -16,72 +16,47 @@ const MOCK_SECRET = {
 
 const mockRoute = (req, res, next) => {
   res.locals.slack = {
-    topic: 'slack_test_topic',
+    ok:      true,
+    team: { id: 'T12345678' },
     callback_id: 'fizz',
-    message: {
-      ok:      true,
-      team: { id: 'T12345678' },
-      callback_id: 'fizz',
-      incoming_webhook: { channel_id: 'C12345678' },
-    },
+    incoming_webhook: { channel_id: 'C12345678' },
   };
   next();
 };
 
 const mockSecretsManager = {
   getSecretValue: (options) => {
-    return {
-      promise: () => Promise.resolve({SecretString: JSON.stringify(MOCK_SECRET)}),
-    };
+    return { promise: () => Promise.resolve({ SecretString: JSON.stringify(MOCK_SECRET) }) };
   },
 };
 
-const mockSns = {
-  publish: (options) => {
-    return {
-      promise: () => Promise.resolve('SNS SUCCESS!'),
-    };
+const mockEventBridge = {
+  putEvents: (options) => {
+    return { promise: () => Promise.resolve('EVENTBRIDGE SUCCESS!') };
   },
 };
 
-const mockSnsFail = {
-  publish: (options) => {
-    return {
-      promise: () => Promise.reject('SNS ERROR!'),
-    };
+const mockEventBridgeFail = {
+  putEvents: (options) => {
+    return { promise: () => Promise.reject('EVENTBRIDGE ERROR!') };
   },
 };
 
 const mockSlack = {
   chat: {
-    postMessage:   (options) => Promise.resolve(Object.assign(options, {type: 'in_channel'})),
-    postEphemeral: (options) => Promise.resolve(Object.assign(options, {type: 'ephemeral'})),
+    postMessage:   (options) => Promise.resolve(Object.assign(options, { type: 'in_channel' })),
+    postEphemeral: (options) => Promise.resolve(Object.assign(options, { type: 'ephemeral' })),
   },
 };
 
-const blockActions = {
-  type: 'block_actions',
-  actions: [
-    {
-      action_id: 'my_action',
-    },
-  ],
-};
-const callback = {
-  type: 'callback',
-  callback_id: 'my_callback'
-};
-const viewSubmission = {
-  type: 'view_submission',
-  view: {
-    callback_id: 'my_callback',
-  },
-};
+const blockActions   = { type: 'block_actions', actions: [ { action_id: 'my_action' } ] };
+const callback       = { type: 'callback', callback_id: 'my_callback' };
+const viewSubmission = { type: 'view_submission', view: { callback_id: 'my_callback' } };
 
 let app, lambda;
 
 describe('AWS | getApp', function() {
-  before(() => { lambda = slackend({secretsmanager: mockSecretsManager}); });
+  before(() => { lambda = slackend({ secretsmanager: mockSecretsManager }); });
 
   it('Creates the app', async function() {
     const app = await lambda.getApp();
@@ -90,7 +65,7 @@ describe('AWS | getApp', function() {
 });
 
 describe('AWS | getEnv', function() {
-  before(() => { lambda = slackend({secretsmanager: mockSecretsManager}); });
+  before(() => { lambda = slackend({ secretsmanager: mockSecretsManager }); });
 
   it('Assigns the secret to process.env', async function() {
     await lambda.getEnv();
@@ -101,7 +76,7 @@ describe('AWS | getEnv', function() {
 });
 
 describe('AWS | getSlack', function() {
-  before(() => { lambda = slackend({secretsmanager: mockSecretsManager}); });
+  before(() => { lambda = slackend({ secretsmanager: mockSecretsManager }); });
 
   it('Creates the Slack client', async function() {
     const slack = await lambda.getSlack();
@@ -110,28 +85,26 @@ describe('AWS | getSlack', function() {
 });
 
 describe('AWS | post[Message|Ephemeral]', function() {
-  before(() => { lambda = slackend({slack: mockSlack}); });
+  before(() => { lambda = slackend({ slack: mockSlack }); });
 
   it('Calls slack.chat.postMessage', async function() {
-    const msg = {channel: 'C1234567', text: 'Hello, world!'};
-    const sns = {Records: [{Sns: {Message: JSON.stringify(msg)}}]};
-    const ret = await lambda.postMessage(sns);
-    const exp = [Object.assign(msg, {type: 'in_channel'})];
+    const msg = { detail: { channel: 'C1234567', text: 'Hello, world!' } };
+    const ret = await lambda.postMessage(msg);
+    const exp = Object.assign(msg.detail, { type: 'in_channel' });
     assert.deepEqual(ret, exp);
   });
 
   it('Calls slack.chat.postEphemeral', async function() {
-    const msg = {channel: 'C1234567', text: 'Hello, world!'};
-    const sns = {Records: [{Sns: {Message: JSON.stringify(msg)}}]};
-    const ret = await lambda.postEphemeral(sns);
-    const exp = [Object.assign(msg, {type: 'ephemeral'})];
+    const msg = { detail: { channel: 'C1234567', text: 'Hello, world!' } };
+    const ret = await lambda.postEphemeral(msg);
+    const exp = Object.assign(msg.detail, { type: 'ephemeral' });
     assert.deepEqual(ret, exp);
   });
 });
 
 describe('AWS | publish', function() {
   it('Succeeds with 204', function(done) {
-    lambda = slackend({sns: mockSns});
+    lambda = slackend({ eventbridge: mockEventBridge });
     app = express();
     app.use(mockRoute, lambda.publish);
     request(app)
@@ -141,74 +114,74 @@ describe('AWS | publish', function() {
   });
 
   it('Fails with 400', function(done) {
-    lambda = slackend({sns: mockSnsFail});
+    lambda = slackend({ eventbridge: mockEventBridgeFail });
     app = express();
     app.use(mockRoute, lambda.publish);
     request(app)
       .get('/')
       .set('Accept', 'application/json')
-      .expect(400, 'SNS ERROR!', done);
+      .expect(400, 'EVENTBRIDGE ERROR!', done);
   });
 
   it('OAuth redirects to Slack', function(done) {
-    lambda = slackend({sns: mockSns});
+    lambda = slackend({ eventbridge: mockEventBridge });
     app = express();
     app.use(mockRoute, lambda.publish);
     request(app)
       .get('/oauth/v2')
-      .set('Accept', 'application/json')
-      .expect('Location', 'slack://channel?team=T12345678&id=C12345678', done);
+      .set('accept', 'application/json')
+      .expect('location', 'slack://channel?team=T12345678&id=C12345678', done);
   });
 })
 
 describe('AWS | handler', function() {
   it('Succeeds with 204', async function() {
-    lambda = slackend({secretsmanager: mockSecretsManager, sns: mockSns});
-    const event   = {path: '/slash/fizz', httpMethod: 'POST', body: 'fizz=buzz'};
-    const context = {awsRequestId: 'awsRequestId', succeed: () => {}};
+    lambda = slackend({ secretsmanager: mockSecretsManager, eventbridge: mockEventBridge });
+    const event   = { path: '/slash/fizz', httpMethod: 'POST', body: 'fizz=buzz' };
+    const context = { awsRequestId: 'awsRequestId', succeed: () => {} };
     const res     = await lambda.handler(event, context);
     assert.equal(res.statusCode, 204);
     assert.equal(res.body, '');
   });
 
   it('Succeeds with 204 (block_actions)', async function() {
-    lambda = slackend({secretsmanager: mockSecretsManager, sns: mockSns});
+    lambda = slackend({ secretsmanager: mockSecretsManager, eventbridge: mockEventBridge });
     const event = {
       path: '/callbacks',
       httpMethod: 'POST',
-      body: `payload=${qs.escape(JSON.stringify(blockActions))}`,
+      body: `payload=${ qs.escape(JSON.stringify(blockActions)) }`,
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'content-type': 'application/x-www-form-urlencoded'
       },
     };
-    const context = {awsRequestId: 'awsRequestId', succeed: () => {}};
+    const context = { awsRequestId: 'awsRequestId', succeed: () => {} };
     const res     = await lambda.handler(event, context);
     assert.equal(res.statusCode, 204);
     assert.equal(res.body, '');
   });
 
   it('Succeeds with 204 (view_submission)', async function() {
-    lambda = slackend({secretsmanager: mockSecretsManager, sns: mockSns});
+    lambda = slackend({ secretsmanager: mockSecretsManager, eventbridge: mockEventBridge });
     const event = {
       path: '/callbacks',
       httpMethod: 'POST',
       body: `payload=${qs.escape(JSON.stringify(viewSubmission))}`,
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'content-type': 'application/x-www-form-urlencoded'
       },
     };
-    const context = {awsRequestId: 'awsRequestId', succeed: () => {}};
+    const context = { awsRequestId: 'awsRequestId', succeed: () => {} };
     const res     = await lambda.handler(event, context);
     assert.equal(res.statusCode, 204);
     assert.equal(res.body, '');
   });
 
   it('Fails with 400', async function() {
-    lambda = slackend({secretsmanager: mockSecretsManager, sns: mockSnsFail});
-    const event   = {path: '/slash/fizz', httpMethod: 'POST', body: 'fizz=buzz'};
-    const context = {awsRequestId: 'awsRequestId', succeed: () => {}};
+    lambda = slackend({ secretsmanager: mockSecretsManager, eventbridge: mockEventBridgeFail });
+    const event   = { path: '/slash/fizz', httpMethod: 'POST', body: 'fizz=buzz' };
+    const context = { awsRequestId: 'awsRequestId', succeed: () => {} };
     const res     = await lambda.handler(event, context);
     assert.equal(res.statusCode, 400);
-    assert.equal(res.body, 'SNS ERROR!');
+    assert.equal(res.body, 'EVENTBRIDGE ERROR!');
   });
 });

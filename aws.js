@@ -4,28 +4,28 @@
 const url = require('url');
 
 // node_modules
-const debug                = require('debug');
-const express              = require('express');
-const serverless           = require('serverless-http');
-const {SecretsManager,SNS} = require('aws-sdk');
-const {WebClient}          = require('@slack/web-api');
+const debug                        = require('debug');
+const express                      = require('express');
+const serverless                   = require('serverless-http');
+const {SecretsManager,EventBridge} = require('aws-sdk');
+const {WebClient}                  = require('@slack/web-api');
 
 // local
 const slackend = require('./index');
 
-let app, slack, secretsmanager, sns;
+let app, slack, secretsmanager, eventbridge;
 
 // Lambda logger
 slackend.logger.addContext = (context) => {
   let reqid;
   if (context && context.awsRequestId) {
-    reqid = `RequestId: ${context.awsRequestId}`;
+    reqid = `RequestId: ${ context.awsRequestId }`;
   } else {
     reqid = '-';
   }
   ['debug', 'info', 'warn', 'error'].map((lvl) => {
     slackend.logger[lvl].original_namespace = slackend.logger[lvl].namespace;
-    slackend.logger[lvl].namespace += ` ${reqid}`;
+    slackend.logger[lvl].namespace += ` ${ reqid }`;
   });
 };
 slackend.logger.dropContext = () => {
@@ -58,11 +58,11 @@ async function getSlack() {
 
 async function handler(event, context) {
   slackend.logger.addContext(context);
-  slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
+  slackend.logger.info(`EVENT ${ JSON.stringify(event) }`);
   const app = await getApp();
   const handle = serverless(app);
   const res = await handle(event, context);
-  slackend.logger.info(`RESPONSE [${res.statusCode}] ${res.body}`);
+  slackend.logger.info(`RESPONSE [${ res.statusCode }] ${ res.body }`);
   slackend.logger.dropContext();
   return res;
 }
@@ -70,86 +70,61 @@ async function handler(event, context) {
 function post(method) {
   return async (event, context) => {
     slackend.logger.addContext(context);
-    slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
+    slackend.logger.info(`EVENT ${ JSON.stringify(event) }`);
     await getSlack();
-    const func = slack.chat[method];
-    const msgs = event.Records.map((rec) => JSON.parse(rec.Sns.Message));
-    const res = await Promise.all(msgs.map((msg) => {
-      slackend.logger.info(`slack.chat.${method} ${JSON.stringify(msg)}`);
-      return func(msg);
-    }));
+    slackend.logger.info(`slack.chat.${ method } ${ JSON.stringify(event.detail) }`);
+    const res = await slack.chat[method](event.detail);
+    slackend.logger.info(`RESPONSE ${ JSON.stringify(res) }`);
     slackend.logger.dropContext();
     return res;
   };
 }
 
 function publishOptions(req, res) {
-  let attrs = {};
-  if (res.locals.slack.type) {
-    attrs.type = stringMessageAttribute(res.locals.slack.type);
-  }
-  if (res.locals.slack.id) {
-    attrs.id = stringMessageAttribute(res.locals.slack.id);
-  }
-  if (res.locals.slack.callback_id) {
-    attrs.callback_id = stringMessageAttribute(res.locals.slack.callback_id);
-  }
-  if (res.locals.slack.action_ids) {
-    attrs.action_ids = stringArrayMessageAttribute(res.locals.slack.action_ids);
-  }
   return {
-    Message:  JSON.stringify(res.locals.slack.message),
-    TopicArn: process.env.AWS_SNS_TOPIC_ARN,
-    MessageAttributes: attrs,
+    Entries: [
+      {
+        Detail:       JSON.stringify(res.locals.slack),
+        DetailType:   process.env.AWS_EVENTBRIDGE_DETAIL_TYPE || 'Slack Event',
+        EventBusName: process.env.AWS_EVENTBRIDGE_BUS_NAME    || 'default',
+        Source:       process.env.AWS_EVENTBRIDGE_SOURCE      || 'com.slack',
+        TraceHeader:  req.headers['x-amzn-trace-id'],
+      },
+    ],
   };
 }
 
 function publishHandler(req, res) {
   if (req.path === '/oauth' || req.path === '/oauth/v2') {
-    let uri        = process.env.SLACK_OAUTH_SUCCESS_URI       || 'slack://channel?team={TEAM_ID}&id={CHANNEL_ID}',
-        channel_id = res.locals.slack.message.incoming_webhook && res.locals.slack.message.incoming_webhook.channel_id,
-        team_id    = res.locals.slack.message.team && res.locals.slack.message.team.id;
-    uri = uri.replace('{TEAM_ID}',    team_id);
-    uri = uri.replace('{CHANNEL_ID}', channel_id);
+    let uri        = process.env.SLACK_OAUTH_SUCCESS_URI || 'slack://channel?team={TEAM_ID}&id={CHANNEL_ID}',
+        channel_id = res.locals.slack.incoming_webhook && res.locals.slack.incoming_webhook.channel_id,
+        team_id    = res.locals.slack.team && res.locals.slack.team.id;
+    uri = uri.replace('{TEAM_ID}', team_id).replace('{CHANNEL_ID}', channel_id);
     uri = url.parse(uri, true).format();
-    slackend.logger.info(`RESPONSE [302] ${uri}`);
+    slackend.logger.info(`RESPONSE [302] ${ uri }`);
     res.redirect(uri);
   } else {
-    //slackend.logger.info(`RESPONSE [204]`);
+    slackend.logger.info(`RESPONSE [204]`);
     res.status(204).send();
   }
 }
 
 function publish(req, res) {
   let options = publishOptions(req, res);
-  slackend.logger.info(`PUBLISH ${JSON.stringify(options)}`);
-  return sns.publish(options).promise()
+  slackend.logger.info(`PUT EVENTS ${ JSON.stringify(options) }`);
+  return eventbridge.putEvents(options).promise()
     .then(() => publishHandler(req, res))
     .catch((err) => {
-      //slackend.logger.warn(`RESPONSE [400] ${JSON.stringify(err)}`);
+      slackend.logger.warn(`RESPONSE [400] ${ JSON.stringify(err) }`);
       res.status(400).send(err);
     });
-}
-
-function stringMessageAttribute(value) {
-  return {
-    DataType:    'String',
-    StringValue: `${value}`,
-  };
-}
-
-function stringArrayMessageAttribute(value) {
-  return {
-    DataType: 'String.Array',
-    StringValue: JSON.stringify(value),
-  }
 }
 
 module.exports = (options = {}) => {
   app            = options.app;
   slack          = options.slack;
   secretsmanager = options.secretsmanager || new SecretsManager();
-  sns            = options.sns || new SNS();
+  eventbridge    = options.eventbridge    || new EventBridge();
 
   return {
     getApp:        getApp,
