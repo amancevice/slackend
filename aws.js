@@ -103,10 +103,10 @@ function publishHandler(req, res) {
       team_id = res.locals.slack.team && res.locals.slack.team.id;
     uri = uri.replace("{TEAM_ID}", team_id).replace("{CHANNEL_ID}", channel_id);
     uri = url.parse(uri, true).format();
-    slackend.logger.info(`RESPONSE [302] ${uri}`);
+    // slackend.logger.info(`RESPONSE [302] ${uri}`);
     res.redirect(uri);
   } else {
-    slackend.logger.info(`RESPONSE [204]`);
+    // slackend.logger.info(`RESPONSE [204]`);
     res.status(204).send();
   }
 }
@@ -115,7 +115,7 @@ function publish(req, res) {
   const options = publishOptions(req, res);
   const publisher = () => publishHandler(req, res);
   const error = (err) => {
-    slackend.logger.warn(`RESPONSE [400] ${JSON.stringify(err)}`);
+    // slackend.logger.warn(`RESPONSE [400] ${JSON.stringify(err)}`);
     res.status(400).send(err);
   };
 
