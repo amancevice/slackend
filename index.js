@@ -116,7 +116,10 @@ function handleEvent(options = {}) {
 
 function handleSlashCmd(options = {}) {
   return (req, res, next) => {
-    res.locals.slack = { type: "slash", body: qs.parse(req.body) };
+    res.locals.slack = {
+      type: `slash/${req.params.cmd}`,
+      body: qs.parse(req.body),
+    };
     next();
   };
 }
