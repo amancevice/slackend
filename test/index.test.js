@@ -66,7 +66,7 @@ describe("API | GET /health", function () {
 
 describe("API | GET /oauth", function () {
   it("Completes the OAuth workflow", function (done) {
-    let exp = { token: "fizz" };
+    let exp = { type: "oauth", body: { token: "fizz" } };
     request(app())
       .get("/oauth?code=buzz")
       .set("accept", "application/json")
@@ -90,7 +90,7 @@ describe("API | GET /oauth", function () {
 
 describe("API | GET /oauth/v2", function () {
   it("Completes the OAuth workflow", function (done) {
-    let exp = { token: "fizz" };
+    let exp = { type: "oauth/v2", body: { token: "fizz" } };
     request(app())
       .get("/oauth/v2?code=buzz")
       .set("accept", "application/json")
@@ -121,33 +121,42 @@ describe("API | GET /oauth/v2", function () {
 
 describe("API | POST /callbacks", function () {
   it("Responds with message and topic", function (done) {
+    let exp = { type: "callback", body: callback };
     request(app())
       .post("/callbacks")
       .send(`payload=${qs.escape(JSON.stringify(callback))}`)
       .set("accept", "application/json")
-      .expect(200, callback, done);
+      .expect(200, exp, done);
   });
 
   it("Responds with message and topic (block_actions)", function (done) {
+    let exp = {
+      type: "callback",
+      body: Object.assign({ action_ids: ["my_action"] }, blockActions),
+    };
     request(app())
       .post("/callbacks")
       .send(`payload=${qs.escape(JSON.stringify(blockActions))}`)
       .set("accept", "application/json")
-      .expect(200, blockActions, done);
+      .expect(200, exp, done);
   });
 
   it("Responds with message and topic (view)", function (done) {
+    let exp = { type: "callback", body: viewSubmission };
     request(app())
       .post("/callbacks")
       .send(`payload=${qs.escape(JSON.stringify(viewSubmission))}`)
       .set("accept", "application/json")
-      .expect(200, viewSubmission, done);
+      .expect(200, exp, done);
   });
 });
 
 describe("API | POST /events", function () {
   it("Responds with message and topic", function (done) {
-    let exp = { event: { type: "team_join" }, type: "event_callback" };
+    let exp = {
+      type: "event",
+      body: { event: { type: "team_join" }, type: "event_callback" },
+    };
     request(app())
       .post("/events")
       .send({ type: "event_callback", event: { type: "team_join" } })
@@ -166,7 +175,7 @@ describe("API | POST /events", function () {
 
 describe("API | POST /slash/:cmd", function () {
   it("Responds with message and topic", function (done) {
-    let exp = { fizz: "buzz" };
+    let exp = { type: "slash", body: { fizz: "buzz" } };
     request(app())
       .post("/slash/fizz")
       .send("fizz=buzz")
@@ -198,7 +207,7 @@ describe("API | Verification", function () {
   });
 
   it("Skips verification", function (done) {
-    let exp = { fizz: "buzz" };
+    let exp = { type: "slash", body: { fizz: "buzz" } };
     process.env.SLACK_DISABLE_VERIFICATION = "1";
     request(app())
       .post("/slash/fizz")
@@ -216,12 +225,16 @@ describe("API | Verification", function () {
     let hmac = crypto.createHmac("sha256", "fake");
     let data = `v0:${ts}:payload=${qs.escape(JSON.stringify(blockActions))}`;
     let sig = `v0=${hmac.update(data).digest("hex")}`;
+    let exp = {
+      type: "callback",
+      body: Object.assign({ action_ids: ["my_action"] }, blockActions),
+    };
     request(err())
       .post("/callbacks")
       .send(`payload=${qs.escape(JSON.stringify(blockActions))}`)
       .set("Accept", "application/json")
       .set("x-slack-request-timestamp", `${ts}`)
       .set("x-slack-signature", sig)
-      .expect(200, blockActions, done);
+      .expect(200, exp, done);
   });
 });

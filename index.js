@@ -73,7 +73,10 @@ function handleOAuth(options = {}, version = null) {
       redirect_uri: options.redirect_uri,
     };
     const finish = (ret) => {
-      res.locals.slack = { type: "oauth", body: ret };
+      res.locals.slack = {
+        type: `oauth${version ? `/${version}` : ""}`,
+        body: ret,
+      };
       next();
     };
     const error = (err) => {
@@ -98,6 +101,11 @@ function handleCallback(options = {}) {
       type: "callback",
       body: JSON.parse(qs.parse(req.body).payload),
     };
+    if (res.locals.slack.body.type === "block_actions") {
+      res.locals.slack.body.action_ids = res.locals.slack.body.actions.map(
+        (x) => x.action_id
+      );
+    }
     next();
   };
 }
@@ -105,9 +113,9 @@ function handleCallback(options = {}) {
 function handleEvent(options = {}) {
   return (req, res, next) => {
     res.locals.slack = { type: "event", body: JSON.parse(req.body) };
-    if (res.locals.slack.type === "url_verification") {
-      logger.info(`RESPONSE [200] ${res.locals.slack.challenge}`);
-      res.json({ challenge: res.locals.slack.challenge });
+    if (res.locals.slack.body.type === "url_verification") {
+      logger.info(`RESPONSE [200] ${res.locals.slack.body.challenge}`);
+      res.json({ challenge: res.locals.slack.body.challenge });
     } else {
       next();
     }
