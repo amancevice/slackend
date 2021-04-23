@@ -56,7 +56,7 @@ async function getSlack() {
   return slack;
 }
 
-async function handler(event, context) {
+async function proxy(event, context) {
   slackend.logger.addContext(context);
   slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
   const app = await getApp();
@@ -67,15 +67,17 @@ async function handler(event, context) {
   return res;
 }
 
-function post(method) {
-  return async (event, context) => {
-    slackend.logger.addContext(context);
-    slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
-    const res = await getSlack().then(() => slack.chat[method](event.detail));
-    slackend.logger.info(`RESPONSE ${JSON.stringify(res)}`);
-    slackend.logger.dropContext();
-    return res;
-  };
+async function post(event, context) {
+  slackend.logger.addContext(context);
+  slackend.logger.info(`EVENT ${JSON.stringify(event)}`);
+  const body = event["detail"];
+  const method = event["detail-type"];
+  const slack = await getSlack();
+  const func = method.split(".").reduce((x, y) => x[y], slack);
+  const res = await func(body);
+  slackend.logger.info(`RESPONSE [${res.statusCode}] ${res.body}`);
+  slackend.logger.dropContext();
+  return res;
 }
 
 function publishOptions(req, res) {
@@ -133,9 +135,8 @@ module.exports = (options = {}) => {
     getApp: getApp,
     getEnv: getEnv,
     getSlack: getSlack,
-    handler: handler,
-    postEphemeral: post("postEphemeral"),
-    postMessage: post("postMessage"),
+    proxy: proxy,
+    post: post,
     publish: publish,
   };
 };

@@ -47,10 +47,9 @@ const mockEventBridgeFail = {
 
 const mockSlack = {
   chat: {
-    postMessage: (options) =>
-      Promise.resolve(Object.assign(options, { type: "in_channel" })),
-    postEphemeral: (options) =>
-      Promise.resolve(Object.assign(options, { type: "ephemeral" })),
+    postMessage: async (options) => {
+      return { ok: true };
+    },
   },
 };
 
@@ -101,23 +100,90 @@ describe("AWS | getSlack", function () {
   });
 });
 
-describe("AWS | post[Message|Ephemeral]", function () {
+describe("AWS | post", function () {
   before(() => {
-    lambda = slackend({ slack: mockSlack });
+    lambda = slackend({ secretsmanager: mockSecretsManager, slack: mockSlack });
   });
 
   it("Calls slack.chat.postMessage", async function () {
-    const msg = { detail: { channel: "C1234567", text: "Hello, world!" } };
-    const ret = await lambda.postMessage(msg);
-    const exp = Object.assign(msg.detail, { type: "in_channel" });
-    assert.deepEqual(ret, exp);
+    const slack = await lambda.getSlack();
+    const res = await lambda.post({
+      detail: { text: "hello!" },
+      "detail-type": "chat.postMessage",
+    });
+    assert.equal(res.ok, true);
+  });
+});
+
+describe("AWS | proxy", function () {
+  it("Succeeds with 204", async function () {
+    lambda = slackend({
+      secretsmanager: mockSecretsManager,
+      eventbridge: mockEventBridge,
+    });
+    const event = {
+      path: "/slash/fizz",
+      httpMethod: "POST",
+      body: "fizz=buzz",
+    };
+    const context = { awsRequestId: "awsRequestId", succeed: () => {} };
+    const res = await lambda.proxy(event, context);
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, "");
   });
 
-  it("Calls slack.chat.postEphemeral", async function () {
-    const msg = { detail: { channel: "C1234567", text: "Hello, world!" } };
-    const ret = await lambda.postEphemeral(msg);
-    const exp = Object.assign(msg.detail, { type: "ephemeral" });
-    assert.deepEqual(ret, exp);
+  it("Succeeds with 204 (block_actions)", async function () {
+    lambda = slackend({
+      secretsmanager: mockSecretsManager,
+      eventbridge: mockEventBridge,
+    });
+    const event = {
+      path: "/callbacks",
+      httpMethod: "POST",
+      body: `payload=${qs.escape(JSON.stringify(blockActions))}`,
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+    };
+    const context = { awsRequestId: "awsRequestId", succeed: () => {} };
+    const res = await lambda.proxy(event, context);
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, "");
+  });
+
+  it("Succeeds with 204 (view_submission)", async function () {
+    lambda = slackend({
+      secretsmanager: mockSecretsManager,
+      eventbridge: mockEventBridge,
+    });
+    const event = {
+      path: "/callbacks",
+      httpMethod: "POST",
+      body: `payload=${qs.escape(JSON.stringify(viewSubmission))}`,
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+    };
+    const context = { awsRequestId: "awsRequestId", succeed: () => {} };
+    const res = await lambda.proxy(event, context);
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, "");
+  });
+
+  it("Fails with 400", async function () {
+    lambda = slackend({
+      secretsmanager: mockSecretsManager,
+      eventbridge: mockEventBridgeFail,
+    });
+    const event = {
+      path: "/slash/fizz",
+      httpMethod: "POST",
+      body: "fizz=buzz",
+    };
+    const context = { awsRequestId: "awsRequestId", succeed: () => {} };
+    const res = await lambda.proxy(event, context);
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body, "EVENTBRIDGE ERROR!");
   });
 });
 
@@ -147,77 +213,5 @@ describe("AWS | publish", function () {
       .get("/oauth/v2")
       .set("accept", "application/json")
       .expect("location", "slack://channel?team=T12345678&id=C12345678", done);
-  });
-});
-
-describe("AWS | handler", function () {
-  it("Succeeds with 204", async function () {
-    lambda = slackend({
-      secretsmanager: mockSecretsManager,
-      eventbridge: mockEventBridge,
-    });
-    const event = {
-      path: "/slash/fizz",
-      httpMethod: "POST",
-      body: "fizz=buzz",
-    };
-    const context = { awsRequestId: "awsRequestId", succeed: () => {} };
-    const res = await lambda.handler(event, context);
-    assert.equal(res.statusCode, 204);
-    assert.equal(res.body, "");
-  });
-
-  it("Succeeds with 204 (block_actions)", async function () {
-    lambda = slackend({
-      secretsmanager: mockSecretsManager,
-      eventbridge: mockEventBridge,
-    });
-    const event = {
-      path: "/callbacks",
-      httpMethod: "POST",
-      body: `payload=${qs.escape(JSON.stringify(blockActions))}`,
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-      },
-    };
-    const context = { awsRequestId: "awsRequestId", succeed: () => {} };
-    const res = await lambda.handler(event, context);
-    assert.equal(res.statusCode, 204);
-    assert.equal(res.body, "");
-  });
-
-  it("Succeeds with 204 (view_submission)", async function () {
-    lambda = slackend({
-      secretsmanager: mockSecretsManager,
-      eventbridge: mockEventBridge,
-    });
-    const event = {
-      path: "/callbacks",
-      httpMethod: "POST",
-      body: `payload=${qs.escape(JSON.stringify(viewSubmission))}`,
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-      },
-    };
-    const context = { awsRequestId: "awsRequestId", succeed: () => {} };
-    const res = await lambda.handler(event, context);
-    assert.equal(res.statusCode, 204);
-    assert.equal(res.body, "");
-  });
-
-  it("Fails with 400", async function () {
-    lambda = slackend({
-      secretsmanager: mockSecretsManager,
-      eventbridge: mockEventBridgeFail,
-    });
-    const event = {
-      path: "/slash/fizz",
-      httpMethod: "POST",
-      body: "fizz=buzz",
-    };
-    const context = { awsRequestId: "awsRequestId", succeed: () => {} };
-    const res = await lambda.handler(event, context);
-    assert.equal(res.statusCode, 400);
-    assert.equal(res.body, "EVENTBRIDGE ERROR!");
   });
 });
