@@ -183,7 +183,7 @@ const app = (options = {}) => {
   app.post("/events", doVerify, doEvent, logSlackMsg);
   app.post("/slash/:cmd", doVerify, doSlash, logSlackMsg);
 
-  // Return routes
+  // Return express app
   return app;
 };
 
