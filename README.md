@@ -1,7 +1,7 @@
 # Asynchronous Slackbot
 
 ![npm](https://img.shields.io/npm/v/slackend?style=flat-square)
-[![test](https://img.shields.io/github/workflow/status/amancevice/slackend/test?logo=github&style=flat-square)](https://github.com/amancevice/slackend/actions)
+[![test](https://img.shields.io/github/actions/workflow/status/amancevice/slackend/test.yml?logo=github&style=flat-square)](https://github.com/amancevice/slackend/actions/workflows/test.yml)
 [![coverage](https://img.shields.io/codeclimate/coverage/amancevice/slackend?logo=code-climate&style=flat-square)](https://codeclimate.com/github/amancevice/slackend/test_coverage)
 [![maintainability](https://img.shields.io/codeclimate/maintainability/amancevice/slackend?logo=code-climate&style=flat-square)](https://codeclimate.com/github/amancevice/slackend/maintainability)
 
